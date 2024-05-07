@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Save and restore simulation</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Bochs User Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Using Bochs"
+HREF="c2623.html"><LINK
+REL="PREVIOUS"
+TITLE="The configuration interface 'textconfig'"
+HREF="x2699.html"><LINK
+REL="NEXT"
+TITLE="Common problems and what to do about them (Troubleshooting)"
+HREF="c2776.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Bochs User Manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x2699.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Using Bochs</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c2776.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="USING-SAVE-RESTORE"
+>Save and restore simulation</A
+></H1
+><P
+>Bochs has now full save/restore support. The state of cpu(s), memory, devices and
+hard drive images
+<A
+NAME="AEN2771"
+HREF="#FTN.AEN2771"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+>
+can be saved. When running Bochs there will be a button in the
+header bar called "Suspend". Depending on config interface and gui there will be a
+prompt where you can enter a path to an existing directory or a gui folder selection
+dialog box. It is possible to save the state at any time, but we recommend to do it
+when the simulation is idle. After pressing OK/Enter, Bochs will save a set of files
+into the selected folder. It is possible to continue after saving the state, but when
+using the restore function in a new Bochs session, all changes after this checkpoint
+will be lost.</P
+><P
+>To restore the saved simulation state you can select the restore function in the
+text mode start menu or specify the restore path at the command line:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>bochs -r /path/to/save-restore-data</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>Then Bochs will start up using the saved configuration and log options, restores
+the state of the hardware and begins the simulation. In the restore mode Bochs
+will ignore bochsrc options from the command line and does not load a normal
+config file.</P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN2771"
+HREF="x2768.html#AEN2771"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>The disk image mode "vvfat" does not support save/restore. All other disk image modes
+copy the whole image or the file containing changes (journal). This may take some time,
+so be patient when using this feature.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x2699.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c2776.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>The configuration interface 'textconfig'</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c2623.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Common problems and what to do about them (Troubleshooting)</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

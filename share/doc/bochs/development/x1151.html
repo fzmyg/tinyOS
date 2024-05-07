@@ -1,0 +1,487 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Building a Bochs release</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Bochs Developers Guide"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Coding"
+HREF="c1112.html"><LINK
+REL="PREVIOUS"
+TITLE="patches:"
+HREF="x1147.html"><LINK
+REL="NEXT"
+TITLE="Webmastering"
+HREF="c1197.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Bochs Developers Guide</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1147.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Coding</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c1197.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="SVN-RELEASE"
+>Building a Bochs release</A
+></H1
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1153"
+>Preparing source files and SVN</A
+></H2
+><P
+>Update version number and strings in configure.in.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>VERSION="2.5"
+VER_STRING="2.5"
+REL_STRING="Build from SVN snapshot on November 27, 2011"</PRE
+></TD
+></TR
+></TABLE
+>
+In the README file you have to update version number and date. Add some
+information about new features if necessary.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>Bochs x86 Pentium+ Emulator
+Updated: Sun Nov 27 16:55:00 CET 2011
+Version: 2.5</PRE
+></TD
+></TR
+></TABLE
+>
+In the file <TT
+CLASS="FILENAME"
+>bochs.manifest</TT
+> you have to update the version
+number for the Windows build.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  version="2.5.0.0"</PRE
+></TD
+></TR
+></TABLE
+>
+Check date, update/sumup info in CHANGES. Run autoconf to regenerate configure and check them in.
+Create an SVN tag that contains all files of the revision that was used in the release.
+For prereleases I create a normal SVN tag like this:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  svn mkdir tags/REL_2_5_pre1_FINAL
+  svn copy trunk/bochs tags/REL_2_5_pre1_FINAL/bochs
+  svn commit</PRE
+></TD
+></TR
+></TABLE
+>
+But for a real release, I make an SVN branch tag AND a normal tag.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  svn mkdir tags/REL_2_5_FINAL
+  svn copy trunk/bochs tags/REL_2_5_FINAL/bochs
+  svn mkdir branches/REL_2_5
+  svn copy trunk/bochs branches/REL_2_5/bochs
+  svn commit</PRE
+></TD
+></TR
+></TABLE
+>
+The tag marks where the branch split off of the main trunk.
+This is very useful in maintaining the branch since you can do diffs
+against it.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>   svn diff tags/REL_2_5_FINAL/bochs trunk/bochs
+   svn diff tags/REL_2_5_FINAL/bochs branches/REL_2_5
+   etc.</PRE
+></TD
+></TR
+></TABLE
+>
+All bugfix-only releases after the final release should be created from the REL_2_5 branch.
+Now you can start building packages with the sources from the created release tag.</P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1163"
+>Building the release on win32</A
+></H2
+><P
+>These instructions require cygwin and MSVC++.</P
+><P
+>In Cygwin:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  sh .conf.win32-vcpp         # runs configure
+  make win32_snap             # unzip workspace, make a win32 source ZIP</PRE
+></TD
+></TR
+></TABLE
+>
+The source ZIP is now ready for upload. To build the binary package, copy it to
+a windows machine, if necessary.</P
+><P
+>Open up Visual C++ and load the workspace file Bochs.sln.  Check
+the Build:Set Active Project Configuration is set the way you want it.
+For releases I use "Win32 Release".</P
+><P
+>To create "bochsdbg.exe" with Bochs debugger support, manually change two
+lines in config.h to turn on the debugger.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>#define BX_DEBUGGER 1
+#define BX_DISASM 1</PRE
+></TD
+></TR
+></TABLE
+>
+VC++ will rebuild Bochs with debugger and overwrite bochs.exe.  To avoid
+trashing the non-debug version, move it out of the way while the debugger
+version is being built.  Then rename the debugger version to bochsdbg.exe.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cd obj-release
+mv bochs.exe bochs-normal.exe
+(build again with BX_DEBUGGER=1 this time)
+mv bochs.exe bochsdbg.exe
+mv bochs-normal.exe bochs.exe</PRE
+></TD
+></TR
+></TABLE
+></P
+><P
+>To get the docbook installed, you need to do something like this:
+<P
+></P
+><UL
+><LI
+><P
+> make dl_docbook </P
+></LI
+><LI
+><P
+> copy up to date doc files </P
+></LI
+></UL
+>
+Then you can do
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cd doc/docbook; touch */*.html</PRE
+></TD
+></TR
+></TABLE
+>
+Do make install_win32 into /tmp or someplace:
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>make install_win32 prefix=/tmp/bochs-2.5</PRE
+></TD
+></TR
+></TABLE
+>
+This copies all the files into /tmp/bochs-2.5 and then creates a
+binary ZIP at /tmp/bochs-2.5.zip. Rename that bochs-2.5.win32-bin.zip.</P
+><P
+>Now make the NSIS installer package (the current script is known to work with NSIS 2.44)
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>cd build/win32/nsis</PRE
+></TD
+></TR
+></TABLE
+>
+Unzip the binary ZIP file into bochs-$VERSION (must match Makefile) and
+then run make.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>unzip ~/bochs-2.5.zip
+make</PRE
+></TD
+></TR
+></TABLE
+>
+That gives an installer called <TT
+CLASS="FILENAME"
+>Bochs-2.5.exe</TT
+>. Test and upload it.</P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1184"
+>Building the release on Linux</A
+></H2
+><P
+>Do a clean SVN checkout from the release tag and specify a not yet existing
+directory name with the version number as the destination. Then create the
+source package from this new directory.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  svn co http://svn.code.sf.net/p/bochs/code/tags/REL_2_5_FINAL/bochs bochs-2.5
+  tar czvf bochs-2.5.tar.gz --exclude=.svn bochs-2.5</PRE
+></TD
+></TR
+></TABLE
+>
+The source TAR file bochs-2.5.tar.gz is ready for upload.</P
+><P
+>The RPM will be building using the configuration in .conf.linux with
+a few parameters from <B
+CLASS="COMMAND"
+>build/redhat/make-rpm</B
+>.  Make any last minute changes
+to .conf.linux.  Any changes will go into the source RPM. The DLX Linux demo package
+will be downloaded to the Bochs root directory if it is not already present there.
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>./build/redhat/make-rpm | tee ../build.txt</PRE
+></TD
+></TR
+></TABLE
+>
+This produces two rpm files in the current directory.  Test and upload.</P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN1191"
+>Creating a file release and uploading files on SF</A
+></H2
+><P
+>When you are ready with creating release packages you have to upload them using
+the SF file manager feature. Create a subdirectory with the version number in
+the <TT
+CLASS="FILENAME"
+>bochs</TT
+> directory. Point the download destination to the
+new directory and start uploading packages. The top of the <TT
+CLASS="FILENAME"
+>CHANGES</TT
+>
+file should be used as the release notes. After setting up the file properties the
+new release is ready for download.</P
+><P
+>After having all files set up in the download area, don't forget to post an announcement
+containing a brief summary of changes to the bochs-announce mailing list and the "Project
+News" section on SF.</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1147.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c1197.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>patches:</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1112.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Webmastering</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,805 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Tracking the source code with SVN</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="HOME"
+TITLE="Bochs User Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="Installation"
+HREF="c356.html"><LINK
+REL="PREVIOUS"
+TITLE="Installation"
+HREF="c356.html"><LINK
+REL="NEXT"
+TITLE="Installing a Binary"
+HREF="x557.html"></HEAD
+><BODY
+CLASS="SECTION"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Bochs User Manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c356.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Installation</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x557.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="SECTION"
+><H1
+CLASS="SECTION"
+><A
+NAME="GET-SRC-SVN"
+>Tracking the source code with SVN</A
+></H1
+><P
+>SVN (Subversion) is a tool used by many software developers to manage changes
+within their source code tree. SVN provides the means to store not only the
+current version of a piece of source code, but a record of all changes (and who
+made those changes) that have occurred to that source code. Use of SVN is
+particularly common on projects with multiple developers, since SVN ensures
+changes made by one developer are not accidentally removed when another
+developer posts their changes to the source tree. The Bochs source code and
+documentation are available using SVN<A
+NAME="AEN383"
+HREF="#FTN.AEN383"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+>.</P
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN386"
+>Checking out Bochs</A
+></H2
+><P
+>When you have SVN installed, the first step is to do a checkout. The initial
+checkout command is long and ugly, but usually you only have to do it
+once. The example below shows the SVN checkout process of the Bochs trunk in Unix.
+On the Windows platform, you can download a SVN client from
+<A
+HREF="http://subversion.apache.org/packages.html#windows"
+TARGET="_top"
+>subversion.apache.org</A
+>,
+or use SVN within Cygwin<A
+NAME="AEN390"
+HREF="#FTN.AEN390"
+><SPAN
+CLASS="footnote"
+>[2]</SPAN
+></A
+>.
+
+<DIV
+CLASS="FIGURE"
+><A
+NAME="AEN393"
+></A
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  user$ <B
+CLASS="COMMAND"
+>svn co http://svn.code.sf.net/p/bochs/code/trunk/bochs bochs</B
+>
+  A    bochs/ltdl.c
+  A    bochs/Makefile.in
+  A    bochs/bochs.h
+  .
+  .   (This might take a few minutes, depending on your network connection.)
+  .
+  A    bochs/install.sh
+   U   bochs
+  Checkout, Revision 10754.
+  user$ <B
+CLASS="COMMAND"
+>cd bochs</B
+>
+  user$ <B
+CLASS="COMMAND"
+>ls</B
+>
+  aclocal.m4       cpu                 logio.cc        pc_system.cc
+  bios             cpudb.h             ltdl.c          pc_system.h
+  bochs.h          crc.cc              ltdlconf.h.in   plugin.cc
+  build            disasm              ltdl.h          plugin.h
+  bx_debug         doc                 ltmain.sh       README
+  bxversion.h.in   docs-html           main.cc         README-plugins
+  bxversion.rc.in  extplugin.h         Makefile.in     README.rfb
+  CHANGES          fpu                 memory          README-wxWindows
+  config.cc        gdbstub.cc          misc            TESTFORM.txt
+  config.guess     gui                 msrs.def        TODO
+  config.h.in      host                osdep.cc        win32_enh_dbg.rc
+  config.sub       install-sh          osdep.h         win32res.rc
+  configure        instrument          param_names.h   wxbochs.rc
+  configure.in     iodev               PARAM_TREE.txt
+  COPYING          load32bitOShack.cc  patches
+  user$ _</PRE
+></TD
+></TR
+></TABLE
+><P
+><B
+>Figure 1. Checking out Bochs in SVN</B
+></P
+></DIV
+></P
+><DIV
+CLASS="NOTE"
+><P
+></P
+><TABLE
+CLASS="NOTE"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="./stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>  This is just an example output of a checkout of specific version of the Bochs
+  trunk and folder. Depending on the checkout command and revision, you most
+  likely will see more/other files.</P
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="TIP"
+><P
+></P
+><TABLE
+CLASS="TIP"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="./stylesheet-images/tip.gif"
+HSPACE="5"
+ALT="Tip"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+>If you have write access to the Bochs SVN tree, see the Developers Guide
+<A
+NAME="AEN404"
+HREF="#FTN.AEN404"
+><SPAN
+CLASS="footnote"
+>[3]</SPAN
+></A
+> for details.</P
+></TD
+></TR
+></TABLE
+></DIV
+><P
+>The SVN checkout process (above) gives you a directory called <TT
+CLASS="FILENAME"
+>bochs</TT
+>
+that contains the very latest source code.  I will refer to this directory
+as <CODE
+CLASS="VARNAME"
+>$BOCHS</CODE
+>.  In each subdirectory directory there's also a
+directory called ".svn" which tells the SVN software where the code was checked
+out, what version you have, and where to go for future updates.</P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN411"
+>Getting the Latest Version</A
+></H2
+><P
+>Most developers use SVN to always give them the latest source code.  The minute
+that any developer checks in a change, they are available to everyone else
+through SVN. You just have to type <B
+CLASS="COMMAND"
+>svn update</B
+> in the
+<CODE
+CLASS="VARNAME"
+>$BOCHS</CODE
+> directory, and SVN will retrieve any files and directories that have
+been changed since you did a checkout.  If you update regularly, each update
+takes a short time because it downloads only the files that changed.
+See also <A
+HREF="x380.html#SVN-RELEASE-VERSION"
+>Getting a release version</A
+>.</P
+><P
+>The <B
+CLASS="COMMAND"
+>svn update</B
+> command tells you if any new files have
+been downloaded from the server, and it also tells you if you have modified any
+of the SVN-controlled files.  As it checks through the source directories, it
+will list files that have changed, with a single letter before the name that
+tells the status of that file.  The most common status letters are listed
+below.
+
+<DIV
+CLASS="TABLE"
+><A
+NAME="AEN419"
+></A
+><P
+><B
+>Table 1. Status letters in a SVN update</B
+></P
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Letter</TH
+><TH
+>Meaning</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>?</TD
+><TD
+>unknown</TD
+><TD
+>        This file is in your bochs directory, but SVN does not know anything
+        about it.  For example, when you compile Bochs, any files created
+        during the build process appear as ?.
+        </TD
+></TR
+><TR
+><TD
+>U</TD
+><TD
+>update</TD
+><TD
+>        SVN downloaded a new version of this file because it changed on the
+        server, usually because someone else did a checkin.
+        </TD
+></TR
+><TR
+><TD
+>A</TD
+><TD
+>added</TD
+><TD
+>        SVN downloaded a newly added file from the server.
+        </TD
+></TR
+><TR
+><TD
+>D</TD
+><TD
+>deleted</TD
+><TD
+>        This file has been deleted on the server and SVN removed it from your
+        local copy.
+        </TD
+></TR
+><TR
+><TD
+>C</TD
+><TD
+>conflict</TD
+><TD
+>        You have changed this file on your disk, but this change conflicts with
+        a change that was checked in.  Conflicts occur when two people change
+        the same line of code in different ways.  You need to edit the
+        conflicting file(s) and clean it up by hand.  Or, sometimes it's
+        easiest to discard your own edits and download a fresh copy, by
+        deleting the conflicting file and running svn update again.
+        </TD
+></TR
+></TBODY
+></TABLE
+></DIV
+></P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="SVN-RELEASE-VERSION"
+>Getting a Release Version</A
+></H2
+><P
+>You can also use the SVN checkout command to get the Bochs source code for
+any release since March 2000.  The command is
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="SCREEN"
+>  user$ <B
+CLASS="COMMAND"
+>svn co http://svn.code.sf.net/p/bochs/code/tags/<TT
+CLASS="REPLACEABLE"
+><I
+>tagname</I
+></TT
+>/bochs bochs</B
+></PRE
+></TD
+></TR
+></TABLE
+>
+The <TT
+CLASS="REPLACEABLE"
+><I
+>tagname</I
+></TT
+> tells which release you want, and it can be one of the following:
+
+<DIV
+CLASS="TABLE"
+><A
+NAME="AEN455"
+></A
+><P
+><B
+>Table 2. Bochs Release Tags</B
+></P
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Bochs version</TH
+><TH
+>Release tag for SVN</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>2.5.1 (bugfix)</TD
+><TD
+>REL_2_5_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.5</TD
+><TD
+>REL_2_5_FINAL</TD
+></TR
+><TR
+><TD
+>2.4.6</TD
+><TD
+>REL_2_4_6_FINAL</TD
+></TR
+><TR
+><TD
+>2.4.5</TD
+><TD
+>REL_2_4_5_FINAL</TD
+></TR
+><TR
+><TD
+>2.4.2</TD
+><TD
+>REL_2_4_2_FINAL</TD
+></TR
+><TR
+><TD
+>2.4.1</TD
+><TD
+>REL_2_4_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.4</TD
+><TD
+>REL_2_4_FINAL</TD
+></TR
+><TR
+><TD
+>2.3.7</TD
+><TD
+>REL_2_3_7_FINAL</TD
+></TR
+><TR
+><TD
+>2.3.6</TD
+><TD
+>REL_2_3_6_FINAL</TD
+></TR
+><TR
+><TD
+>2.3.5</TD
+><TD
+>REL_2_3_5_FINAL</TD
+></TR
+><TR
+><TD
+>2.3</TD
+><TD
+>REL_2_3_FINAL</TD
+></TR
+><TR
+><TD
+>2.2.6 (intermediate2)</TD
+><TD
+>REL_2_2_6_FINAL</TD
+></TR
+><TR
+><TD
+>2.2.5 (intermediate1)</TD
+><TD
+>REL_2_2_5_FINAL</TD
+></TR
+><TR
+><TD
+>2.2.1 (bugfix1)</TD
+><TD
+>REL_2_2_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.2</TD
+><TD
+>REL_2_2_FINAL</TD
+></TR
+><TR
+><TD
+>2.1.1 (bugfix1)</TD
+><TD
+>REL_2_1_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.1</TD
+><TD
+>REL_2_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.0.2 (bugfix2)</TD
+><TD
+>REL_2_0_2_FINAL</TD
+></TR
+><TR
+><TD
+>2.0.1 (bugfix1)</TD
+><TD
+>REL_2_0_1_FINAL</TD
+></TR
+><TR
+><TD
+>2.0</TD
+><TD
+>REL_2_0_FINAL</TD
+></TR
+><TR
+><TD
+>1.4.1 (bugfix1)</TD
+><TD
+>REL_1_4_1_FINAL</TD
+></TR
+><TR
+><TD
+>1.4</TD
+><TD
+>REL_1_4_FINAL</TD
+></TR
+><TR
+><TD
+>1.3</TD
+><TD
+>REL_1_3_FINAL</TD
+></TR
+><TR
+><TD
+>1.2.1 (bugfix1)</TD
+><TD
+>REL_1_2_1_FINAL</TD
+></TR
+><TR
+><TD
+>1.2</TD
+><TD
+>REL_1_2_FINAL</TD
+></TR
+><TR
+><TD
+>1.1.2 (bugfix3)</TD
+><TD
+>REL_1_1_2_BASE</TD
+></TR
+><TR
+><TD
+>1.1.1 (bugfix2)</TD
+><TD
+>REL_1_1_1_BASE</TD
+></TR
+><TR
+><TD
+>1.1 (bugfix1)</TD
+><TD
+>REL_1_1_BASE</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+>&#13;</P
+></DIV
+><DIV
+CLASS="SECTION"
+><H2
+CLASS="SECTION"
+><A
+NAME="AEN547"
+>More about SVN</A
+></H2
+><P
+>Entire books have been written on SVN, so there's no sense in duplicating
+it all here in the Bochs documentation.  Some sources of additional
+information are listed below.</P
+><P
+></P
+><UL
+><LI
+><P
+>The <A
+HREF="http://subversion.apache.org"
+TARGET="_top"
+>subversion.apache.org
+site</A
+> has tons of SVN FAQs and documentation.</P
+></LI
+><LI
+><P
+>A German <A
+HREF="http://pvs.uni-muenster.de/pvs/lehre/WS06/projekt/svn-faq.html"
+TARGET="_top"
+>SVN FAQ</A
+>
+is available at University of Muenster.</P
+></LI
+></UL
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN383"
+HREF="x380.html#AEN383"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>You can download SVN software and documentation from
+<A
+HREF="http://subversion.apache.org"
+TARGET="_top"
+>subversion.apache.org</A
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN390"
+HREF="x380.html#AEN390"
+><SPAN
+CLASS="footnote"
+>[2]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Cygwin is an open source Unix-like environment for Windows platforms,
+available at <A
+HREF="http://www.cygwin.com"
+TARGET="_top"
+>www.cygwin.com</A
+>.</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN404"
+HREF="x380.html#AEN404"
+><SPAN
+CLASS="footnote"
+>[3]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>See the <A
+HREF="../development/resources.html"
+TARGET="_top"
+>Developers Guide</A
+>
+and/or look at
+<A
+HREF="http://sourceforge.net/apps/trac/sourceforge/wiki/Subversion#Access"
+TARGET="_top"
+>SourceForge's Subversion documentation</A
+>,
+for instructions.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c356.html"
+ACCESSKEY="P"
+>&#60;&#60;&#60; Previous</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="book1.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x557.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installation</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c356.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Installing a Binary</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

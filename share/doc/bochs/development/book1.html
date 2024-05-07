@@ -1,0 +1,543 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>Bochs Developers Guide</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
+REL="NEXT"
+TITLE="Resources for developers"
+HREF="c17.html"></HEAD
+><BODY
+CLASS="BOOK"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="BOOK"
+><A
+NAME="AEN1"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="TITLE"
+><A
+NAME="AEN2"
+>Bochs Developers Guide</A
+></H1
+><H3
+CLASS="AUTHOR"
+><A
+NAME="AEN5"
+></A
+>Kevin Lawton</H3
+><H3
+CLASS="AUTHOR"
+><A
+NAME="AEN8"
+></A
+>Bryce Denney</H3
+><H3
+CLASS="AUTHOR"
+><A
+NAME="AEN11"
+></A
+>Christophe Bothamy</H3
+><H4
+CLASS="EDITEDBY"
+>Edited by</H4
+><H3
+CLASS="EDITOR"
+>Michael Calabrese</H3
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="c17.html"
+>Resources for developers</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c17.html#SVN-WRITE-ACCESS-SETUP"
+>Setting up SVN write access</A
+></DT
+><DT
+><A
+HREF="x26.html"
+>Using SVN write access</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x26.html#AEN28"
+>Checking in files</A
+></DT
+><DT
+><A
+HREF="x26.html#AEN41"
+>Creating a backup of the SVN repository</A
+></DT
+><DT
+><A
+HREF="x26.html#AEN47"
+>Setting SVN commit notifications</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x56.html"
+>SourceForge bug, feature, and patch trackers</A
+></DT
+><DT
+><A
+HREF="x60.html"
+>Ideas for other sections</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="c64.html"
+>About the code</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c64.html#CODE-OVERVIEW"
+>Overview</A
+></DT
+><DT
+><A
+HREF="x98.html"
+>Directory Structure</A
+></DT
+><DT
+><A
+HREF="x184.html"
+>Emulator Objects</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x184.html#AEN186"
+>Weird macros and other mysteries</A
+></DT
+><DT
+><A
+HREF="x184.html#STATIC-METHODS-HACK"
+>Static methods hack</A
+></DT
+><DT
+><A
+HREF="x184.html#CPU-MEM-OBJECTS"
+>CPU und memory objects in UP/SMP configurations</A
+></DT
+><DT
+><A
+HREF="x184.html#CONFIG-PARAMETER-TREE"
+>The configuration parameter tree</A
+></DT
+><DT
+><A
+HREF="x184.html#SAVE-RESTORE"
+>The save/restore feature</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x273.html"
+>Configure Scripting</A
+></DT
+><DT
+><A
+HREF="x277.html"
+>Log Functions</A
+></DT
+><DT
+><A
+HREF="x281.html"
+>timers</A
+></DT
+><DT
+><A
+HREF="x285.html"
+>Bochs's CMOS map</A
+></DT
+><DT
+><A
+HREF="x290.html"
+>Sound Blaster 16 Emulation</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x290.html#AEN299"
+>How well does it work?</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN304"
+>Output to a sound card</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN307"
+>Installation on Linux</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN312"
+>Configuring Bochs</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN319"
+>Runtime configuration</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN324"
+>Features planned for the future</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN331"
+>Description of the sound output classes</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN337"
+>Files</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN347"
+>Classes</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN364"
+>Methods</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN371"
+>bx_sound_OS_c(bx_sb16_c*sb16)</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN385"
+>~bx_sound_OS_c()</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN388"
+>int openmidioutput(char *device)</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN400"
+>Description of the parameters:</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN410"
+>int midiready()</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN426"
+>int sendmidicommand(int delta, int command, int length, Bit8u data[])</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN448"
+>int closemidioutput()</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN460"
+>int openwaveoutput(char *device)</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN494"
+>int startwaveplayback(int frequency, int bits, int stereo, int format)</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN567"
+>int waveready()</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN577"
+>int sendwavepacket(int length, Bit8u data[])</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN621"
+>int stopwaveplayback()</A
+></DT
+><DT
+><A
+HREF="x290.html#AEN628"
+>int closewaveoutput()</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x639.html"
+>Harddisk Images based on redologs</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x639.html#AEN652"
+>Description</A
+></DT
+><DT
+><A
+HREF="x639.html#AEN661"
+>How redologs works ?</A
+></DT
+><DT
+><A
+HREF="x639.html#AEN754"
+>Parameters</A
+></DT
+><DT
+><A
+HREF="x639.html#AEN918"
+>Redolog class description</A
+></DT
+><DT
+><A
+HREF="x639.html#AEN970"
+>Disk image classes description</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x1066.html"
+>How to add keymapping in a GUI client</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="c1070.html"
+>Debugger</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1070.html#AEN1072"
+>compile with debugger support</A
+></DT
+><DT
+><A
+HREF="x1076.html"
+>get started in debugger</A
+></DT
+><DT
+><A
+HREF="x1080.html"
+>command reference</A
+></DT
+><DT
+><A
+HREF="x1084.html"
+>techniques</A
+></DT
+><DT
+><A
+HREF="x1088.html"
+>I/O Interface to Bochs Debugger</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x1088.html#AEN1095"
+>Commands supported by port 0x8A00</A
+></DT
+><DT
+><A
+HREF="x1088.html#AEN1103"
+>Access to port 0x8A01 (write-only)</A
+></DT
+><DT
+><A
+HREF="x1088.html#AEN1107"
+>Sample</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+><A
+HREF="c1112.html"
+>Coding</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1112.html#AEN1114"
+>Coding guidelines</A
+></DT
+><DT
+><A
+HREF="x1147.html"
+>patches:</A
+></DT
+><DT
+><A
+HREF="x1151.html"
+>Building a Bochs release</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x1151.html#AEN1153"
+>Preparing source files and SVN</A
+></DT
+><DT
+><A
+HREF="x1151.html#AEN1163"
+>Building the release on win32</A
+></DT
+><DT
+><A
+HREF="x1151.html#AEN1184"
+>Building the release on Linux</A
+></DT
+><DT
+><A
+HREF="x1151.html#AEN1191"
+>Creating a file release and uploading files on SF</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+><A
+HREF="c1197.html"
+>Webmastering</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1197.html#PROJECT-WEBSPACE"
+>Bochs project webspace</A
+></DT
+><DT
+><A
+HREF="x1258.html"
+>Updating the Bochs website content</A
+></DT
+><DT
+><A
+HREF="x1266.html"
+>Updating the SVN snapshot</A
+></DT
+><DT
+><A
+HREF="x1274.html"
+>Updating the online documentation</A
+></DT
+><DT
+><A
+HREF="x1283.html"
+>other content</A
+></DT
+><DT
+><A
+HREF="x1287.html"
+>available tools</A
+></DT
+></DL
+></DD
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c17.html"
+ACCESSKEY="N"
+>Next &#62;&#62;&#62;</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Resources for developers</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
