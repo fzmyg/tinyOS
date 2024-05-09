@@ -2,3 +2,4 @@ bochs.out
 ./src/bin/*
 ./src/kernel/bin/*
 ./lib/kernel/bin/*
+.*.swp

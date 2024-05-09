@@ -170,3 +170,7 @@ void thread_unblock(struct task_struct*pcb)
 }
 
 
+ pid_t sys_getpid(void)
+ {
+	return getpcb()->pid;
+ }

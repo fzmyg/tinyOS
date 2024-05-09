@@ -3,7 +3,6 @@
 %macro INT_VECTOR 2
 section .text
 int_%1_entry:
-	;cli
 	%2
 	push ds
 	push es
@@ -63,7 +62,20 @@ int_entry_table:
 	INT_VECTOR 0x1f,ZERO
 	INT_VECTOR 0x20,ZERO ;clock interrupt
 	INT_VECTOR 0x21,ZERO ;key board interrupt
-
+	INT_VECTOR 0x22,ZERO 
+	INT_VECTOR 0x23,ZERO 
+	INT_VECTOR 0x24,ZERO 
+	INT_VECTOR 0x25,ZERO 
+	INT_VECTOR 0x26,ZERO 
+	INT_VECTOR 0x27,ZERO 
+	INT_VECTOR 0x28,ZERO 
+	INT_VECTOR 0x29,ZERO 
+	INT_VECTOR 0x2a,ZERO 
+	INT_VECTOR 0x2b,ZERO 
+	INT_VECTOR 0x2c,ZERO 
+	INT_VECTOR 0x2d,ZERO 
+	INT_VECTOR 0x2e,ZERO 
+	INT_VECTOR 0x2f,ZERO 
 
 section .text
 global int_exit
@@ -75,5 +87,23 @@ int_exit:
 	pop es
 	pop ds
 	add esp,4
-	;sti   ;open inturrupt
 	iretd
+
+
+extern syscall_table
+global syscall_entry
+syscall_entry:
+	ZERO
+	push ds
+	push es
+	push fs
+	push gs
+	pushad 				;按顺序压入 eax,ecx,edx,ebx,esp,ebp,esi,edi
+	push 0x80
+	push edx
+	push ecx
+	push ebx
+	call [syscall_table+eax*4]
+	add esp,0xc
+	mov [esp+4*8],eax 	;修改栈中压入的eax的值
+	jmp int_exit

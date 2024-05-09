@@ -9,6 +9,7 @@
 #include"ioqueue.h"
 #include"keyboard.h"
 #include"process.h"
+#include"syscall.h"
 void* threadA(void*s);
 void* threadB(void*s);
 void* userProcessA(void);
@@ -22,6 +23,8 @@ int main(void)
 	enableInt();
 	//asm volatile ("movl $0x33,%%eax;movl %%eax,%%fs":::"eax");
 	executeProcess(userProcessA,"user process A");
+	pid_t pid = getpid();
+	//console_put_int((uint32_t)pid);
 	while(1){};
 	return 0;
 }
@@ -53,6 +56,7 @@ void* threadB(void*s)
 void* userProcessA(void)
 {
 	int val = 1;
+	(uint32_t)getpid();
 	while(1){
 		//put_int(val++);
 	}

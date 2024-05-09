@@ -7,7 +7,9 @@
 #include"keyboard.h"
 #include"debug.h"
 #include"console.h"
-#define IDT_DESC_CNT 0x30
+#include"string.h"
+#define IDT_DESC_CNT 0x81
+
 #define PIC_M_CTRL 0x20		//master chip's control port
 #define PIC_M_DATA 0x21		//master chip's data port
 #define PIC_S_CTRL 0xa0		//slave chip's control port
@@ -24,6 +26,8 @@ int_handler int_vector_table[IDT_DESC_CNT];
 
 char * int_name[IDT_DESC_CNT];
 
+extern void syscall_entry(void);
+
 /* init an  idt entry */
 static void mapIdtDesc(GateDesc*idte,uint8_t attribute,int_handler function)
 {
@@ -37,9 +41,11 @@ static void mapIdtDesc(GateDesc*idte,uint8_t attribute,int_handler function)
 static void idtDescInit(void)
 {
 	int i;
-	for( i = 0;i<IDT_DESC_CNT;i++){
+	for( i = 0;i<0x30;i++){
 		mapIdtDesc(idt+i,IDT_DESC_ATTR_DPL0,int_entry_table[i]);
 	}
+	memset(idt+0x30,0,sizeof(GateDesc)*0x50);
+	mapIdtDesc(idt+0x80,IDT_DESC_ATTR_DPL3,&syscall_entry); //初始化系统调用中断的中断门描述符
 }
 /*init 8295a*/
 static void picInit(void)

@@ -4,7 +4,9 @@
 #include"stdint.h"
 #include"list.h"
 #include"memory.h"
+
 typedef void*(*thread_func)(void*);
+typedef uint16_t pid_t;
 
 enum task_status{
 	TASK_RUNNING,
@@ -53,6 +55,7 @@ typedef struct thread_stack{
 
 typedef struct task_struct{
 	uint32_t self_kernel_stack; 		// each process has its own kernel stack
+	pid_t pid;
 	enum task_status status;		// status of process
 	char name[16];				// process name
 	uint8_t priority;			// priority of process
@@ -80,4 +83,7 @@ extern void switch_to_and_free(struct task_struct*,struct task_struct*);
 extern void thread_block(enum task_status stat);
 
 extern void thread_unblock(struct task_struct*pcb);
+
+extern pid_t sys_getpid(void);
+
 #endif
