@@ -5,3 +5,4 @@ dump
 loader*
 mbr.bin
 os_kernel*
+settings.json

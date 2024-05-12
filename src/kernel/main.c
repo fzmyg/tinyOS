@@ -9,7 +9,7 @@
 #include"ioqueue.h"
 #include"keyboard.h"
 #include"process.h"
-#include"syscall.h"
+#include"stdio.h"
 void* threadA(void*s);
 void* threadB(void*s);
 void* userProcessA(void);
@@ -53,9 +53,10 @@ void* threadB(void*s)
 void* userProcessA(void)
 {
 	int val = 1;
+	char s[]="zbcdawdwad";
 	val=(uint32_t)getpid();
 	while(1){
-		write("zbcsb");
+		printf("zbcsb%d%s\n",0,s);
 	}
 	return NULL;
 }
