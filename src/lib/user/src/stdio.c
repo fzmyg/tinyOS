@@ -2,9 +2,10 @@
 #include"string.h"
 #include"stdio.h"
 #include"syscall.h"
-#define va_start(ap,v) ap = (va_list*)&v;
-#define va_arg(ap,type) (*((type*)((ap+=sizeof(type))-sizeof(type))))
-#define va_end(ap) ap = NULL
+//函数可变参数宏
+#define va_start(parg,argv) parg = (va_list*)&argv;                         //初始化参数指针
+#define va_arg(parg,type) (*((type*)((parg+=sizeof(type))-sizeof(type))))   //移动参数指针并返回函数参数
+#define va_end(parg) parg = NULL                                            //将参数指针置空
 
 static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
 {   if(val==0){
