@@ -28,7 +28,7 @@ char * int_name[IDT_DESC_CNT];
 
 extern void syscall_entry(void);
 
-/* init an  idt entry */
+/* 初始化中断描述符 */
 static void mapIdtDesc(GateDesc*idte,uint8_t attribute,int_handler function)
 {
 	idte->func_offset_low = ((uint32_t)function&0x0000ffff);
@@ -37,7 +37,7 @@ static void mapIdtDesc(GateDesc*idte,uint8_t attribute,int_handler function)
 	idte->attribute = attribute;
 	idte->func_offset_high=((((uint32_t)function&0xffff0000))>>16);
 }
-/*init idt*/
+/*初始化中断描述符表*/
 static void idtDescInit(void)
 {
 	int i;
@@ -47,7 +47,7 @@ static void idtDescInit(void)
 	memset(idt+0x30,0,sizeof(GateDesc)*0x50);
 	mapIdtDesc(idt+0x80,IDT_DESC_ATTR_DPL3,&syscall_entry); //初始化系统调用中断的中断门描述符
 }
-/*init 8295a*/
+/*初始话8259A中断芯片*/
 static void picInit(void)
 {
 	/* init master chip */
@@ -66,6 +66,7 @@ static void picInit(void)
 	put_str("pic init done\n");
 }
 
+/* 一般中断处理函数 */
 static void generalIntHandler(uint8_t int_num)
 {
 	if(int_num==0x27 || int_num==0x2f)
@@ -128,7 +129,7 @@ static void exceptionInit(void)
 	put_str("execptionInit done\n");
 }
 
-/*init idt , 8295a and init idtr*/
+/*对外接口，初始化IDT*/
 void idt_init(void)
 {
 	put_str("idt init start\n");
@@ -140,6 +141,7 @@ void idt_init(void)
 	put_str("idt init done\n");
 }
 
+/* 获取当前中断状态 */
 enum int_status getIntStatus(void)
 {
 	uint32_t eflags;
@@ -149,7 +151,7 @@ enum int_status getIntStatus(void)
 	else
 		return INT_OFF;
 }
-
+/* 开启中断 */
 enum int_status enableInt(void)
 {
 	enum int_status old_status = getIntStatus();
@@ -158,6 +160,7 @@ enum int_status enableInt(void)
 	return old_status;
 }
 
+/* 关闭中断 */
 enum int_status closeInt(void)
 {
 	enum int_status old_status = getIntStatus();
@@ -194,6 +197,7 @@ static void int_0x21_handler(void)
 	//setIntStatus(stat);
 }
 
+/* 在中断向量表中注册函数 */
 void registerIntFunc(uint8_t vector_number,int_handler func)
 {
 	int_vector_table[vector_number] = func;

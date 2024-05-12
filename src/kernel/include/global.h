@@ -68,13 +68,14 @@
 #define PG_SIZE 0x1000
 
 #include"stdint.h"
+/*全局描述符*/
 struct GdtDesc{
-	uint16_t limit_low_word;
-	uint16_t base_low_word;
-	uint8_t base_mid_byte;
-	uint8_t attr_low_byte;
-	uint8_t limit_high_and_attr_high;
-	uint8_t base_high_byte;
+	uint16_t limit_low_word; //低16位段界限
+	uint16_t base_low_word;  //低16位段基址
+	uint8_t base_mid_byte;   //中8位段基址
+	uint8_t attr_low_byte;   //低8位段属性
+	uint8_t limit_high_and_attr_high;//高4位段界限和高4位属性
+	uint8_t base_high_byte;  //高8位段基址
 };
 #define DIV_ROUND_UP(a,b) ((a+b-1)/b)
 #define EFLAGS_IOPL_0 (0<<12)

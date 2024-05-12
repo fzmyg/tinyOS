@@ -16,7 +16,7 @@ enum task_status{
 	TASK_HANGING,
 	TASK_DIED
 };
-/* reserve to process boot */
+/* 用户进程设置栈，从栈中进入特权级3 */
 typedef struct intr_stack{
 	uint32_t vec_no;
 	uint32_t edi;	
@@ -33,14 +33,14 @@ typedef struct intr_stack{
 	uint32_t ds;
 	
 	uint32_t err_code;
-	void* eip;
-	uint32_t cs;
-	uint32_t eflags;
-	void*esp;
-	uint32_t ss;
+	void* eip;         //用户进程执行函数
+	uint32_t cs;       //用户进程代码段选择子
+	uint32_t eflags;   //
+	void*esp;          //用户进程栈
+	uint32_t ss;	   //用户进程栈段选择子
 }intrStack;
 
-/* reserve to thread boot */
+/* 进程初始化设置 switch_to 进入 function */
 typedef struct thread_stack{
 	uint32_t ebp;
 	uint32_t ebx;
@@ -48,42 +48,48 @@ typedef struct thread_stack{
 	uint32_t esi;
 	
 	void(*eip)(thread_func fun,void*args);
-	void* unused_retaddr;
+	void* unused_retaddr;  	//线程回收器地址
 	thread_func function;
 	void*func_args;
 }threadStack;
 
 typedef struct task_struct{
-	uint32_t self_kernel_stack; 		// each process has its own kernel stack
-	pid_t pid;
-	enum task_status status;		// status of process
-	char name[16];				// process name
-	uint8_t priority;			// priority of process
-	uint8_t ticks;				// when 0x20 interrupt occur ,ticks -= 1
-	uint32_t elapsed_ticks;			// when 0x20 interrupt occur ,elapsed_ticks += 1
-	struct list_elem ready_node;		// ready node to link with all ready process's PCB
-	struct list_elem all_node;	 	// all node to link with all PCB
-	uint32_t pgdir_vaddr; 			// process's own page directory table's kernel virtual addr
-	struct vmpool vaddr_pool;		// vaddr_pool
-	uint32_t stack_magic;			// magic number to protect task_struct 
+	uint32_t self_kernel_stack; 	//进程内核栈地址---esp0
+	pid_t pid;						//进程ID
+	enum task_status status;		//线程/进程ID
+	char name[16];					//线程/进程名
+	uint8_t priority;				//线程/进程 权重值(总时间片)
+	uint8_t ticks;					//线程/进程 剩余时间片
+	uint32_t elapsed_ticks;			//进程总共消耗的时间片
+	struct list_elem ready_node;	//就绪队列节点
+	struct list_elem all_node;	 	//全部队列节点
+	uint32_t pgdir_vaddr; 			//页目录表在内核进程页表中的地址
+	struct vmpool vaddr_pool;		//进程虚拟内存池
+	uint32_t stack_magic;			//魔术 --- 防止内核栈溢出 
 }taskStruct;
 
+/*创建内核线程*/
 extern struct task_struct* thread_start (char*name,int proi,thread_func func,void*argv);
 
+/*获取当前进程/线程PCB*/
 extern struct task_struct* getpcb(void);
 
+/*进程调度*/
 extern void schedule(void);
 
+/*初始化内main内核线程*/
 extern void initThread(void);
 
+/*线程切换*/
 extern void switch_to(struct task_struct*,struct task_struct*);
 
+/*线程切换并释放内存池*/
 extern void switch_to_and_free(struct task_struct*,struct task_struct*);
 
+/*阻塞线程*/
 extern void thread_block(enum task_status stat);
 
+/*唤醒线程*/
 extern void thread_unblock(struct task_struct*pcb);
-
-
 
 #endif

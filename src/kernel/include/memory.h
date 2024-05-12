@@ -16,10 +16,10 @@ enum pool_flags{
 	PF_USER
 };
 
-
+/*虚拟内存池*/
 typedef struct vmpool{
-	Bitmap bitmap;
-	uint32_t vm_start;
+	Bitmap bitmap;     /*内存池位图*/
+	uint32_t vm_start; /*虚拟内存起始内存*/
 }vmpool;
 
 

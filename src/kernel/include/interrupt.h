@@ -23,13 +23,13 @@
 #define ICW4_MASTER ((0b000<<5)+(ICW4_SFNM<<4)+(ICW4_BUF<<3)+(ICW4_MS<<2)+(ICW4_AEOI<<1)+(ICW4_PM_x86))
 #define ICW4_SLAVE  ((0b000<<5)+(ICW4_SFNM<<4)+(ICW4_BUF<<3)+(ICW4_MS<<2)+(ICW4_AEOI<<1)+(ICW4_PM_x86))
 typedef void* int_handler;
-
+/*中断门描述符*/
 typedef struct GateDesc{
-	uint16_t func_offset_low;
-	uint16_t selector;
-	uint8_t dcount; //const value
-	uint8_t attribute;
-	uint16_t func_offset_high;
+	uint16_t func_offset_low; //中断函数地址低16位
+	uint16_t selector; 		  //中断代码段选择子
+	uint8_t dcount;           //描述符固定值
+	uint8_t attribute;        //描述符属性
+	uint16_t func_offset_high;//中断函数地址高16位
 }GateDesc;
 enum int_status{
 	INT_OFF,
