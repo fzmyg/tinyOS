@@ -84,6 +84,6 @@ extern void thread_block(enum task_status stat);
 
 extern void thread_unblock(struct task_struct*pcb);
 
-extern pid_t sys_getpid(void);
+
 
 #endif

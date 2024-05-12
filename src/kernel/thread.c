@@ -168,9 +168,3 @@ void thread_unblock(struct task_struct*pcb)
 	}
 	setIntStatus(old_int_status);
 }
-
-
- pid_t sys_getpid(void)
- {
-	return getpcb()->pid;
- }

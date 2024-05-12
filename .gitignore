@@ -1,5 +1,7 @@
 bochs.out
-./src/bin/*
-./src/kernel/bin/*
-./lib/kernel/bin/*
+*.o
 .*.swp
+dump
+loader*
+mbr.bin
+os_kernel*

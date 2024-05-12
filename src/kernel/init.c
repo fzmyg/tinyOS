@@ -7,7 +7,7 @@
 #include"console.h"
 #include"keyboard.h"
 #include"tss.h"
-#include"syscall.h"
+#include"syscall_init.h"
 void init_all(void)
 {
 	put_str("init_all start\n");
