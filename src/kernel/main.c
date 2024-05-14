@@ -56,7 +56,8 @@ void* userProcessA(void)
 	char s[]="zbcdawdwad";
 	val=(uint32_t)getpid();
 	while(1){
-		printf("zbcsb%d%s\n",0,s);
+		void*p = malloc(2);
+		printf("zbcsb%d%s%x\n",0,s,(uint32_t)p);
 	}
 	return NULL;
 }

@@ -17,7 +17,7 @@
 #include"interrupt.h"
 #include"thread.h"
 #include"sync.h"
-
+#define DIV_ROUND_UP(a,b) ((a+b-1)/b)
 typedef struct pool{
         struct lock lock;   //内存池锁
         Bitmap bitmap;		//内存位图
@@ -31,6 +31,8 @@ typedef struct pool{
 struct pool kernel_pool,user_pool; //定义内核物理池，用户物理池
 
 struct vmpool kernel_vmpool;		//内核虚拟内存池
+
+struct mem_block_desc k_mem_block_descs[MEM_DESC_CNT]; /*内核内存块描述符数组*/
 
 //初始化内核和用户物理内存池，内核虚拟内存池
 static void initAllPool(uint32_t all_mem)
@@ -82,6 +84,7 @@ void initMemPool(void)
         put_str("initing all memory pools\n");
         uint32_t all_mem = (*(uint32_t*)(0xb03));
         initAllPool(all_mem);
+		initMemBlockDesc(k_mem_block_descs);
         put_str("init all memory pools done\n");
 }
 
@@ -232,3 +235,104 @@ void* addr_v2p(void* vaddr)
 	return (void*)(((*ppte) & (uint32_t)0xfffff000)|((uint32_t)(vaddr)&(uint32_t)0x00000fff));
 }
 
+
+/*初始化内存管理符*/
+void initMemBlockDesc(struct mem_block_desc*descs)
+{
+	uint32_t size = 16;
+	uint32_t desc_index = 0;
+	for(;desc_index<MEM_DESC_CNT;desc_index++){
+		list_init(&descs[desc_index].free_list);
+		descs[desc_index].block_size=size;
+		size*=2;
+		descs[desc_index].blocks_per_arena = (PG_SIZE-sizeof(struct arena))/size;
+	}
+}
+
+/* 在arena中凭借index索引找到mem_block地址*/
+static struct mem_block* arena2block(struct arena*arena,uint32_t index)
+{
+	return (struct mem_block*)((uint32_t)arena + sizeof(struct arena) + index*(arena->desc->block_size));
+}
+
+/* 凭借mem_block找到arena */
+static struct arena* block2arena(struct mem_block* block)
+{
+	return (struct arena*)((uint32_t)block & 0xfffff000);
+}
+
+
+void * sys_malloc(uint32_t size)
+{
+	enum pool_flags pf=PF_USER;
+	struct pool* mem_pool = NULL; 			//物理内存池
+	uint32_t pool_size = 0; 	  			//内存池大小
+	struct mem_block_desc*descs = NULL; 	//内存描述符指针
+	struct task_struct*  cur_pcb = getpcb();//当前PCB
+	if(cur_pcb->pgdir_vaddr == NULL){ 		//内核线程调用
+		pf = PF_KERNEL;
+		pool_size = kernel_pool.m_length;
+		mem_pool = & kernel_pool;
+		descs = k_mem_block_descs;
+	}else{	//用户进程调用
+		pf = PF_USER;
+		pool_size = user_pool.m_length;
+		mem_pool= &user_pool;
+		descs = cur_pcb->descs;
+	}
+
+	if(size>0&&size<pool_size == false){ //申请内存量超出内存池大小
+		return NULL;                     //直接返回 空
+	}
+	struct arena* arena=NULL;		  //申请内存起始地址
+	struct mem_block* mem_block=NULL; //负责遍历arene，用来组织链表
+	acquireLock(&mem_pool->lock); 	  //修改物理池需主动获取锁
+	if(size>1024){ /*申请内存数大于1024B*/
+		uint32_t page_cnt = DIV_ROUND_UP(size+sizeof(struct arena),PG_SIZE); //
+		arena = mallocPage(pf,page_cnt);
+		if(arena == NULL){	
+			releaseLock(&mem_pool->lock);
+			return NULL; /*申请失败 则返回NULL*/
+		}
+		memset(arena,0,page_cnt*PG_SIZE);
+		arena -> desc = NULL;
+		arena -> cnt = page_cnt;
+		arena -> large = true;
+		releaseLock(&mem_pool->lock);
+		return (void*)(arena+1);
+	}else{  /*申请数量小于1024B*/
+		uint8_t desc_index; /*描述符索引*/
+		while(size > descs[desc_index].block_size) desc_index++;
+		if(list_empty(&descs[desc_index].free_list)){ /*内存块描述符空闲内存块队列不为空*/
+			arena = mallocPage(pf,1); //申请新4KB内存
+			if(arena == NULL) {       //内存不足 直接返回
+				releaseLock(&mem_pool->lock);
+				return NULL;
+			}
+			memset(arena,0,PG_SIZE);
+			arena -> large = false;
+			arena -> desc = &descs[desc_index];
+			arena -> cnt = descs[desc_index].blocks_per_arena;
+
+			uint32_t block_index  = 0;
+			//操作list需关中断
+			enum int_status stat = closeInt();
+			struct mem_block* block=NULL;
+			/* 设置每个area中的mem_block */
+			for(block_index = 0 ; block_index < descs[desc_index].blocks_per_arena;block_index++){
+				block = arena2block(arena,block_index);
+				ASSERT(find_elem(&arena->desc->free_list,&block->free_elem)==false);
+				list_append(&(arena->desc[desc_index].free_list),&block->free_elem); /*添加内存块到内存空闲队列中*/
+			} 
+			setIntStatus(stat);
+		}
+		struct mem_block* block = NULL;
+		struct list_elem* pnode = list_pop(&(descs[desc_index].free_list)); 
+		block = (struct mem_block*)((uint32_t)pnode-offset(struct mem_block,free_elem));
+		arena=block2arena(block);
+		arena -> cnt --;
+		memset(block,0,descs[desc_index].block_size);
+		releaseLock(&mem_pool->lock);
+		return (void*)(block);
+	}
+}

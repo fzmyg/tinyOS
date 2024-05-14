@@ -4,6 +4,8 @@
 #include"console.h"
 #include"print.h"
 #include"string.h"
+#include"memory.h"
+
 void* syscall_table[SYSCALL_NR];
 
 static pid_t sys_getpid(void)
@@ -22,5 +24,6 @@ void initSyscall(void)
     put_str("init syscall start\n");
     syscall_table[GET_PID]=&sys_getpid;
     syscall_table[WRITE]=&sys_write;
+    syscall_table[MALLOC]=&sys_malloc;
     put_str("init syscall done\n");
 }

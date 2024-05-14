@@ -65,6 +65,7 @@ typedef struct task_struct{
 	struct list_elem all_node;	 	//全部队列节点
 	uint32_t pgdir_vaddr; 			//页目录表在内核进程页表中的地址
 	struct vmpool vaddr_pool;		//进程虚拟内存池
+	struct mem_block_desc descs[MEM_DESC_CNT]; //用户内存管理
 	uint32_t stack_magic;			//魔术 --- 防止内核栈溢出 
 }taskStruct;
 

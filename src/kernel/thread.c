@@ -63,6 +63,7 @@ struct task_struct* thread_start(char* name,int prio,thread_func func,void* args
 	memset(thread,0,sizeof(struct task_struct));
 	initThreadBase(thread,name,prio);
 	initThreadStack(thread,func,args);
+	initMemBlockDesc(thread->descs);
 	enum int_status stat = closeInt();
 	ASSERT(find_elem(&thread_ready_list,&thread->ready_node)==false);
 	list_append(&thread_ready_list,&thread->ready_node);

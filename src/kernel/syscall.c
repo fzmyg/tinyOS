@@ -24,3 +24,8 @@ uint32_t write(const char*str)
 {
     return _SYSCALL1(WRITE,str);
 }
+
+void* malloc(uint32_t size)
+{
+    return _SYSCALL1(MALLOC,size);
+}

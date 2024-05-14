@@ -4,6 +4,7 @@
 enum SYSCALL_OFFSET{
     GET_PID = 0,
     WRITE = 1,
+    MALLOC = 2,
 };
 extern void initSyscall(void);
 
