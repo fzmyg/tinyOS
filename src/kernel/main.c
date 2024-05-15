@@ -58,6 +58,7 @@ void* userProcessA(void)
 	while(1){
 		void*p = malloc(2);
 		printf("zbcsb%d%s%x\n",0,s,(uint32_t)p);
+		free(p);
 	}
 	return NULL;
 }

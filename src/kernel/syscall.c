@@ -17,15 +17,20 @@
 
 pid_t getpid(void)
 {
-    return _SYSCALL0(GET_PID);
+    return (pid_t)_SYSCALL0(GET_PID);
 }
 
 uint32_t write(const char*str)
 {
-    return _SYSCALL1(WRITE,str);
+    return (uint32_t)_SYSCALL1(WRITE,str);
 }
 
 void* malloc(uint32_t size)
 {
-    return _SYSCALL1(MALLOC,size);
+    return (void*)_SYSCALL1(MALLOC,size);
+}
+
+void free(void*ptr)
+{
+    _SYSCALL1(FREE,ptr);   
 }

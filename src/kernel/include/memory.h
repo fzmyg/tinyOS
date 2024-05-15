@@ -24,23 +24,23 @@ typedef struct vmpool{
 }vmpool;
 
 /*内存块*/
-typedef struct mem_block{
+struct mem_block{
 	struct list_elem free_elem;
-}mem_block;
+};
 
 /*内存块描述符*/
-typedef struct mem_block_desc{
+struct mem_block_desc{
 	struct list free_list;   /*可用的mem_block组成的链表*/
 	uint32_t block_size;
 	uint32_t blocks_per_arena;
-}mem_block_desc;
+};
 
 /* 申请内存4KB起始数据结构*/
-typedef struct arena{
+struct arena{
 	struct mem_block_desc* desc; //指向pcb中desc
 	uint32_t cnt; //large 为0，为内存块数量，large为1，为页数量
 	bool large;  //为true表示分配arena大小为4KB*n
-}arena;
+};
 
 #define MEM_DESC_CNT 7 		/*16 32 64 128 256 512 1024*/
 
@@ -67,4 +67,6 @@ extern void* mallocOnePageByVaddr(enum pool_flags pf,void* vaddr);
 extern void initMemBlockDesc(struct mem_block_desc * k_mem_block_descs);
 
 extern void*sys_malloc(uint32_t cnt);
+
+extern void sys_free(void* ptr);
 #endif

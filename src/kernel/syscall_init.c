@@ -25,5 +25,6 @@ void initSyscall(void)
     syscall_table[GET_PID]=&sys_getpid;
     syscall_table[WRITE]=&sys_write;
     syscall_table[MALLOC]=&sys_malloc;
+    syscall_table[FREE]=&sys_free;
     put_str("init syscall done\n");
 }

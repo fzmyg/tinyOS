@@ -281,11 +281,10 @@ void * sys_malloc(uint32_t size)
 		descs = cur_pcb->descs;
 	}
 
-	if(size>0&&size<pool_size == false){ //申请内存量超出内存池大小
+	if((size>0&&size<pool_size)== false){ //申请内存量超出内存池大小
 		return NULL;                     //直接返回 空
 	}
 	struct arena* arena=NULL;		  //申请内存起始地址
-	struct mem_block* mem_block=NULL; //负责遍历arene，用来组织链表
 	acquireLock(&mem_pool->lock); 	  //修改物理池需主动获取锁
 	if(size>1024){ /*申请内存数大于1024B*/
 		uint32_t page_cnt = DIV_ROUND_UP(size+sizeof(struct arena),PG_SIZE); //
@@ -317,7 +316,7 @@ void * sys_malloc(uint32_t size)
 			uint32_t block_index  = 0;
 			//操作list需关中断
 			enum int_status stat = closeInt();
-			struct mem_block* block=NULL;
+			struct mem_block* block=NULL; //负责遍历arene，用来组织链表
 			/* 设置每个area中的mem_block */
 			for(block_index = 0 ; block_index < descs[desc_index].blocks_per_arena;block_index++){
 				block = arena2block(arena,block_index);
@@ -334,5 +333,75 @@ void * sys_malloc(uint32_t size)
 		memset(block,0,descs[desc_index].block_size);
 		releaseLock(&mem_pool->lock);
 		return (void*)(block);
+	}
+}
+
+
+static void pfree(uint32_t pg_phy_addr)
+{
+	struct pool* mem_pool = (pg_phy_addr>=user_pool.m_start)?&user_pool:&kernel_pool;
+	uint32_t bit_index = (pg_phy_addr-mem_pool->m_start)/PG_SIZE;
+	acquireLock(&mem_pool->lock);
+	setBitmap(&mem_pool->bitmap,bit_index,0);
+	releaseLock(&mem_pool->lock);
+}
+
+
+static void unMapVaddr(uint32_t vaddr)
+{
+	uint32_t* pte_ptr = getPtePtr(vaddr);
+	(*pte_ptr) &= ~PG_P_1;
+	asm volatile ("invlpg %0"::"m"(vaddr):"memory"); /*更新页表缓存*/
+}
+
+static void vfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
+{
+	struct task_struct* pcb =getpcb();
+	struct vmpool * vmem_pool = (pf == PF_KERNEL)?&kernel_vmpool:&pcb->vaddr_pool;
+	uint32_t bit_index = ((uint32_t)_vaddr-vmem_pool->vm_start)/PG_SIZE;
+	uint32_t i = 0 ;
+	for(i=0;i<pg_cnt;i++){
+		setBitmap(&vmem_pool->bitmap,bit_index+i,0);
+	}
+}
+
+static void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
+{
+	uint32_t vaddr = (uint32_t)_vaddr,i=0;
+
+	for(i=0;i<pg_cnt;i++){
+		uint32_t paddr = (uint32_t)addr_v2p((void*)vaddr);
+		pfree(paddr);         /*从物理内存池置0*/
+		unMapVaddr(vaddr);    /* 页表项P位置0*/
+		vaddr+= PG_SIZE;
+	}
+	vfree(pf,_vaddr,pg_cnt);  /*虚拟内促池置0*/
+}
+
+void sys_free(void*vaddr)
+{
+	struct task_struct* pcb = getpcb();
+	enum pool_flags pf = pcb->pgdir_vaddr==NULL?PF_KERNEL:PF_USER;
+	struct mem_block* mem_block = (struct mem_block*)vaddr;
+	struct arena* arena =  block2arena(mem_block);
+	ASSERT(arena->large == 0 || arena->large == 1);
+	if(arena->large == true){
+		mfree(pf,arena,arena->cnt);
+	}else{
+		enum int_status stat = closeInt();
+		list_append(&arena->desc->free_list,(struct list_elem*)mem_block);
+		setIntStatus(stat);
+		arena->cnt++ ;
+		if(arena->cnt == arena->desc->blocks_per_arena){
+			uint32_t i = 0;
+			for(i=0;i<arena->cnt;i++){
+				struct mem_block* block = arena2block(arena,i);
+				stat = closeInt();
+				ASSERT(find_elem(&arena->desc->free_list,(struct list_elem*)block)==true);
+				list_remove((struct list_elem*)block);
+				setIntStatus(stat);
+			}
+			mfree(pf,vaddr,1);
+		}
 	}
 }
