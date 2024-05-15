@@ -336,28 +336,31 @@ void * sys_malloc(uint32_t size)
 	}
 }
 
-
+/*将物理内存池相应位置0*/
 static void pfree(uint32_t pg_phy_addr)
 {
-	struct pool* mem_pool = (pg_phy_addr>=user_pool.m_start)?&user_pool:&kernel_pool;
+	struct pool* mem_pool = (pg_phy_addr>=user_pool.m_start)?&user_pool:&kernel_pool;/*靠pg_phy_addr判断操作内存池对象是用户物理内存池还是内核物理内存池*/
 	uint32_t bit_index = (pg_phy_addr-mem_pool->m_start)/PG_SIZE;
 	acquireLock(&mem_pool->lock);
 	setBitmap(&mem_pool->bitmap,bit_index,0);
 	releaseLock(&mem_pool->lock);
 }
 
-
+/*修改页表删除虚拟内存到物理内存映射关系*/
 static void unMapVaddr(uint32_t vaddr)
 {
+	ASSERT((vaddr&0xfffff000) == 0);
 	uint32_t* pte_ptr = getPtePtr(vaddr);
-	(*pte_ptr) &= ~PG_P_1;
+	(*pte_ptr) &= (~PG_P_1); 			/*pte P位置0表示相应页不存在*/
 	asm volatile ("invlpg %0"::"m"(vaddr):"memory"); /*更新页表缓存*/
 }
 
+/*将虚拟地址池置相应位0*/
 static void vfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 {
 	struct task_struct* pcb =getpcb();
-	struct vmpool * vmem_pool = (pf == PF_KERNEL)?&kernel_vmpool:&pcb->vaddr_pool;
+	ASSERT(pcb>0xc0000000&&((uint32_t)_vaddr&0x00000fff==0));
+	struct vmpool * vmem_pool = (pf == PF_KERNEL)?&kernel_vmpool:&pcb->vaddr_pool; /*靠pf确定虚拟内存池操作对象是内核虚拟池还是用户PCB中虚拟池*/ 
 	uint32_t bit_index = ((uint32_t)_vaddr-vmem_pool->vm_start)/PG_SIZE;
 	uint32_t i = 0 ;
 	for(i=0;i<pg_cnt;i++){
@@ -365,6 +368,7 @@ static void vfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 	}
 }
 
+/*内存释放总函数 1.物理位图置0，2.删除页映射，3.虚拟位图置0*/
 static void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 {
 	uint32_t vaddr = (uint32_t)_vaddr,i=0;
@@ -381,25 +385,25 @@ static void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 void sys_free(void*vaddr)
 {
 	struct task_struct* pcb = getpcb();
-	enum pool_flags pf = pcb->pgdir_vaddr==NULL?PF_KERNEL:PF_USER;
+	enum pool_flags pf = pcb->pgdir_vaddr==NULL?PF_KERNEL:PF_USER; /*获取当前用户身份*/
 	struct mem_block* mem_block = (struct mem_block*)vaddr;
 	struct arena* arena =  block2arena(mem_block);
 	ASSERT(arena->large == 0 || arena->large == 1);
-	if(arena->large == true){
-		mfree(pf,arena,arena->cnt);
-	}else{
+	if(arena->large == true){ /*若为大块内存申请释放*/
+		mfree(pf,arena,arena->cnt); /*直接释放*/
+	}else{ /*小块内存申请释放*/
 		enum int_status stat = closeInt();
 		ASSERT(find_elem(&arena->desc->free_list,(struct list_elem*)mem_block)==false);
 		list_append(&arena->desc->free_list,(struct list_elem*)mem_block); /*将mem_block 重新加入到 内存描述符的空闲队列中*/
 		setIntStatus(stat);
 		arena->cnt++ ;
-		if(arena->cnt == arena->desc->blocks_per_arena){ /*若arena中所有内存块都在等待队列中（空闲），则从等待队列中删除所有mem_block节点，并清楚页表项*/
+		if(arena->cnt == arena->desc->blocks_per_arena){ /*若arena中所有内存块都在等待队列中（整页空闲），则从等待队列中删除所有mem_block节点，并清楚页表项*/
 			uint32_t i = 0;
 			for(i=0;i<arena->cnt;i++){ /*遍历删除所有内存节点*/
-				struct mem_block* block = arena2block(arena,i);
+				struct mem_block* block = arena2block(arena,i); 
 				stat = closeInt();
 				ASSERT(find_elem(&arena->desc->free_list,(struct list_elem*)block)==true);
-				list_remove((struct list_elem*)block);
+				list_remove((struct list_elem*)block); /*删除块节点*/
 				setIntStatus(stat);
 			}
 			mfree(pf,vaddr,1); /*清楚页表项，恢复内存位图*/
