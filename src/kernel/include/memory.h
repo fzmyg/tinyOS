@@ -12,6 +12,7 @@
 #define PG_RW_W 0b010
 #define PG_P_0  0b000
 #define PG_P_1  0b001
+
 enum pool_flags{
 	PF_KERNEL,
 	PF_USER
@@ -25,21 +26,21 @@ typedef struct vmpool{
 
 /*内存块*/
 struct mem_block{
-	struct list_elem free_elem;
+	struct list_elem free_elem; /*内存块链表结点，用于组织块大小相同的内存块*/
 };
 
 /*内存块描述符*/
 struct mem_block_desc{
-	struct list free_list;   /*可用的mem_block组成的链表*/
-	uint32_t block_size;
-	uint32_t blocks_per_arena;
+	struct list free_list;   	/*可用的mem_block组成的链表*/
+	uint32_t block_size;        /*内存块大小*/
+	uint32_t blocks_per_arena;  /*每个arena可存放mem_block数量*/
 };
 
 /* 申请内存4KB起始数据结构*/
 struct arena{
 	struct mem_block_desc* desc; //指向pcb中desc
-	uint32_t cnt; //large 为0，为内存块数量，large为1，为页数量
-	bool large;  //为true表示分配arena大小为4KB*n
+	uint32_t cnt; 				 //large 为0，为空闲内存块数量，large为1，为总申请页数量
+	bool large;  				 //为true表示以页为单位分配，为false表示以块为单位分配
 };
 
 #define MEM_DESC_CNT 7 		/*16 32 64 128 256 512 1024*/

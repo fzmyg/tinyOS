@@ -389,19 +389,20 @@ void sys_free(void*vaddr)
 		mfree(pf,arena,arena->cnt);
 	}else{
 		enum int_status stat = closeInt();
-		list_append(&arena->desc->free_list,(struct list_elem*)mem_block);
+		ASSERT(find_elem(&arena->desc->free_list,(struct list_elem*)mem_block)==false);
+		list_append(&arena->desc->free_list,(struct list_elem*)mem_block); /*将mem_block 重新加入到 内存描述符的空闲队列中*/
 		setIntStatus(stat);
 		arena->cnt++ ;
-		if(arena->cnt == arena->desc->blocks_per_arena){
+		if(arena->cnt == arena->desc->blocks_per_arena){ /*若arena中所有内存块都在等待队列中（空闲），则从等待队列中删除所有mem_block节点，并清楚页表项*/
 			uint32_t i = 0;
-			for(i=0;i<arena->cnt;i++){
+			for(i=0;i<arena->cnt;i++){ /*遍历删除所有内存节点*/
 				struct mem_block* block = arena2block(arena,i);
 				stat = closeInt();
 				ASSERT(find_elem(&arena->desc->free_list,(struct list_elem*)block)==true);
 				list_remove((struct list_elem*)block);
 				setIntStatus(stat);
 			}
-			mfree(pf,vaddr,1);
+			mfree(pf,vaddr,1); /*清楚页表项，恢复内存位图*/
 		}
 	}
 }
