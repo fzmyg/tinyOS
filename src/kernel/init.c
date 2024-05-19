@@ -8,9 +8,11 @@
 #include"keyboard.h"
 #include"tss.h"
 #include"syscall_init.h"
+#include"ide.h"
 void init_all(void)
 {
 	put_str("init_all start\n");
+	ide_init();
 	idt_init();
 	initMemPool();
 	initThread();

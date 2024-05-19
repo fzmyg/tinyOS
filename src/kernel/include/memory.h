@@ -39,7 +39,7 @@ struct mem_block_desc{
 /* 申请内存4KB起始数据结构*/
 struct arena{
 	struct mem_block_desc* desc; //指向pcb中desc
-	uint32_t cnt; 				 //large 为0，为空闲内存块数量，large为1，为总申请页数量
+	uint32_t cnt; 				 //large 为0，为*空闲*内存块数量，large为1，为总申请页数量
 	bool large;  				 //为true表示以页为单位分配，为false表示以块为单位分配
 };
 

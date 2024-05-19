@@ -10,6 +10,19 @@ struct task_struct* main_thread;
 struct list thread_ready_list;
 struct list thread_all_list;
 static struct list_elem* thread_tag;
+struct task_struct * idle_thread;
+
+#define UNUSED __attribute__((unused))
+
+/*系统空闲时运行的线程*/
+static void idle(void* arg UNUSED)
+{
+	while(1){
+		thread_block(TASK_BLOCKED);
+		asm volatile ("sti; hlt;":::"memory");
+	}
+}
+
 /* threade function booter */
 static void execFunc(thread_func func,void*args)
 {
@@ -116,7 +129,9 @@ void schedule(void)
 
 
 	}
-	ASSERT(!list_empty(&thread_ready_list));
+	if(list_empty(&thread_ready_list)){ /*若没有可执行的线程则唤醒idle线程*/
+		thread_unblock(idle_thread);
+	}
 	thread_tag =list_pop(&thread_ready_list);                  			  //get first process's node form pcb queue
 	struct task_struct*next_pcb = (struct task_struct*)elem2PCBentry(struct task_struct,ready_node,thread_tag);
 	activateProcess(next_pcb);
@@ -137,6 +152,7 @@ void initThread(void)
 	list_init(&thread_ready_list);
 	list_init(&thread_all_list);
 	make_main_thread();
+	thread_start("idle",10,&idle,NULL); //初始化idle线程
 	put_str("init thread done\n");
 }
 
@@ -164,8 +180,20 @@ void thread_unblock(struct task_struct*pcb)
 	ASSERT(pcb->status == TASK_BLOCKED || pcb->status == TASK_WAITING || pcb->status == TASK_HANGING);
 	if(pcb->status != TASK_READY){
 		ASSERT(!find_elem(&thread_ready_list,&pcb->ready_node));
-		list_push(&thread_ready_list,&pcb->ready_node);
+		list_push(&thread_ready_list,&pcb->ready_node); //阻塞队列加到队首以优先调用
 		pcb->status = TASK_READY;
 	}
 	setIntStatus(old_int_status);
+}
+
+/*主动挂起当前进程 （不重新设置proi）*/
+void thread_yield(void)
+{
+	struct task_struct * pcb = getpcb();
+	enum int_status stat = closeInt();
+	ASSERT(find_elem(&thread_ready_list,&pcb->ready_node)==false);
+	list_append(&thread_ready_list,&pcb->ready_node);
+	pcb -> status = TASK_READY;
+	schedule();
+	setIntStatus(stat);
 }

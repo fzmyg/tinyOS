@@ -63,7 +63,7 @@ static void initAllPool(uint32_t all_mem)
 	kernel_vmpool.bitmap.pbitmap = (void*)(KERNEL_BITMAP_START + kernel_bitmap_byte_len + user_bitmap_byte_len);
 	kernel_vmpool.vm_start = KERNEL_HEAP_START;
 	initBitmap(&kernel_vmpool.bitmap);  
-
+	
 	put_str("[kernel bitmap start         ]:");put_int(KERNEL_BITMAP_START);put_char(10);
 	put_str("[kernel bitmao end           ]:");put_int(KERNEL_BITMAP_START+kernel_pool.bitmap.bitmap_byte_len-1);put_char(10);
 	put_str("[user bitmap start           ]:");put_int(KERNEL_BITMAP_START+kernel_pool.bitmap.bitmap_byte_len);put_char(10);
@@ -349,7 +349,6 @@ static void pfree(uint32_t pg_phy_addr)
 /*修改页表删除虚拟内存到物理内存映射关系*/
 static void unMapVaddr(uint32_t vaddr)
 {
-	ASSERT((vaddr&0xfffff000) == 0);
 	uint32_t* pte_ptr = getPtePtr(vaddr);
 	(*pte_ptr) &= (~PG_P_1); 			/*pte P位置0表示相应页不存在*/
 	asm volatile ("invlpg %0"::"m"(vaddr):"memory"); /*更新页表缓存*/
@@ -359,7 +358,6 @@ static void unMapVaddr(uint32_t vaddr)
 static void vfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 {
 	struct task_struct* pcb =getpcb();
-	ASSERT(pcb>0xc0000000&&((uint32_t)_vaddr&0x00000fff==0));
 	struct vmpool * vmem_pool = (pf == PF_KERNEL)?&kernel_vmpool:&pcb->vaddr_pool; /*靠pf确定虚拟内存池操作对象是内核虚拟池还是用户PCB中虚拟池*/ 
 	uint32_t bit_index = ((uint32_t)_vaddr-vmem_pool->vm_start)/PG_SIZE;
 	uint32_t i = 0 ;

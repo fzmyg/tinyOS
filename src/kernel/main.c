@@ -10,8 +10,12 @@
 #include"keyboard.h"
 #include"process.h"
 #include"stdio.h"
-void* threadA(void*s);
-void* threadB(void*s);
+#include"syscall.h"
+
+#define UNUSED __attribute__((unused))
+
+void threadA(void*s);
+void threadB(void*s);
 void* userProcessA(void);
 int main(void)
 {
@@ -26,7 +30,7 @@ int main(void)
 	return 0;
 }
 
-void* threadA(void*s)
+void threadA(void*s)
 {
 	while(1){
 		
@@ -38,16 +42,14 @@ void* threadA(void*s)
 		}
 		setIntStatus(stat);
 	}
-	return NULL;
 }
 
-void* threadB(void*s)
+void threadB(void*s UNUSED)
 {
 	int ans = 1000;
 	for(;ans>0;ans--){
 		console_put_str("ans");
 	}
-	return NULL;
 }
 
 void* userProcessA(void)

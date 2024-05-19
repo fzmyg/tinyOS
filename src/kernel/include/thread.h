@@ -5,7 +5,7 @@
 #include"list.h"
 #include"memory.h"
 
-typedef void*(*thread_func)(void*);
+typedef void(*thread_func)(void*);
 typedef uint16_t pid_t;
 
 enum task_status{
@@ -93,4 +93,6 @@ extern void thread_block(enum task_status stat);
 /*唤醒线程*/
 extern void thread_unblock(struct task_struct*pcb);
 
+/*挂起线程*/
+extern void thread_yield(void);
 #endif

@@ -24,4 +24,8 @@ extern void initLock(struct lock*plock);
 extern void acquireLock(struct lock*plock);
 /*释放锁*/
 extern void releaseLock(struct lock*plock);
+/*信号量增加*/
+extern void semaUp(struct semaphore*sema);
+/*信号量降低*/
+extern void semaDown(struct semaphore*sema);
 #endif

@@ -61,8 +61,8 @@ static void picInit(void)
 	outb(PIC_S_DATA,ICW3_SLAVE); //ICW3
 	outb(PIC_S_DATA,ICW4_SLAVE); //ICW4
 	
-	outb(PIC_M_DATA,0xfc); // open master chip's IRQ0(clock) and IRQ1(keyboard) OCW1
-	outb(PIC_S_DATA,0xff); // close all int from slave chip  OCW1
+	outb(PIC_M_DATA,0xf8); // OCW1 开启时钟中断,键盘中断,级联中断
+	outb(PIC_S_DATA,0xbf); // OCW1 打开硬盘中断
 	put_str("pic init done\n");
 }
 
@@ -202,7 +202,3 @@ void registerIntFunc(uint8_t vector_number,int_handler func)
 {
 	int_vector_table[vector_number] = func;
 }
-
-
-
-

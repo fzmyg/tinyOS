@@ -21,10 +21,10 @@ static inline uint8_t inb(uint16_t port)
 /*read  serious of data from port*/
 static inline void insw(uint16_t port,void *addr,uint32_t word_cnt)
 {
-	asm volatile ("mov ax,0x0010;\
-		       mov es,ax;\
-		       cld;\
-		       rep insw"\
-		       :"+D"(addr),"+c"(word_cnt):"d"(port):"memory");
+	asm volatile ("movw $0x0010,%%ax;"\
+		       "movw %%ax,%%es;"\
+		       "cld;"\
+		       "rep insw;"\
+				:"+D"(addr),"+c"(word_cnt):"d"(port):"memory");
 }
 #endif

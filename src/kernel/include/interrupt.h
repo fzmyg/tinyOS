@@ -2,18 +2,18 @@
 #define __INTERRUPT_H__
 #include"stdint.h"
 
-#define ICW1_IC4 1  //need to set ICW4
-#define ICW1_SNGL 0 //single or multi
-#define ICW1_ADI 0  //nope
-#define ICW1_LTIM 0 //edeg
+#define ICW1_IC4 1  //需设置ICW4
+#define ICW1_SNGL 0 //级联
+#define ICW1_ADI 0  //x86
+#define ICW1_LTIM 0 //触发方式:边沿触发
 #define ICW1_MASTER ((0b0001<<4) + (ICW1_LTIM<<3) + (ICW1_ADI<<2) + (ICW1_SNGL<<1) + ICW1_IC4)
 #define ICW1_SLAVE  ((0b0001<<4) + (ICW1_LTIM<<3) + (ICW1_ADI<<2) + (ICW1_SNGL<<1) + ICW1_IC4)
 
-#define ICW2_MASTER 0x20
-#define ICW2_SLAVE  0x28
+#define ICW2_MASTER 0x20 //主片起始中断号
+#define ICW2_SLAVE  0x28 //从片起始中断号
 
-#define ICW3_MASTER 0b00000100
-#define ICW3_SLAVE  0x02
+#define ICW3_MASTER 0b00000100 //IRQ2连接从片
+#define ICW3_SLAVE  0x02       //主片IRQ2来连接从片
 
 #define ICW4_SFNM 0
 #define ICW4_BUF  0

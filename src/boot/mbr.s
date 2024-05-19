@@ -1,5 +1,5 @@
 %include"boot.inc"
-section text vstart=0x7c00
+section text vstart=0x7c00 ;mbr 起始地址
 global _start
 _start:
 	mov ax,cs
@@ -68,22 +68,22 @@ read_loader:
 	out dx,al
 	
 	mov dx,0x1f7
-not_ready:
+.not_ready:
 	in al,dx
 	and al,0x08
 	cmp al,0x08
-	jne not_ready
+	jne .not_ready
 	pop bx
 	pop ax
 	
 	mov di,ax
 	mov cx,1024
 	mov dx,0x1f0
-read:
+.read:
 	in ax,dx
 	mov [di],ax
 	add di,2
-	loop read
+	loop .read
 	ret
 load_loader_str:
 	db "loading loader ...",0

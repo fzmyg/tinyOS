@@ -25,7 +25,7 @@ void initLock(struct lock* plock)
 /*
  * 获取信号量（关中断条件下进行）
  * */
-static void semaDown(struct semaphore * psema)
+void semaDown(struct semaphore * psema)
 {
 	enum int_status old_status = closeInt();
 	while(psema->value == 0){
@@ -42,7 +42,7 @@ static void semaDown(struct semaphore * psema)
 /*
  *释放信号量
  * */
-static void semaUp(struct semaphore*psema)
+void semaUp(struct semaphore*psema)
 {
 	enum int_status old_status = closeInt();
 	ASSERT(psema->value == 0);
@@ -84,5 +84,4 @@ void releaseLock(struct lock*plock)
 	plock -> holder_repeat_nr = 0;
 	semaUp(&plock->semaphore);	//释放信号量
 }
-
 

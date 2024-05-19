@@ -11,4 +11,6 @@ extern uint32_t write(const char*s);
 /*申请内存*/
 extern void* malloc(uint32_t size);
 
+/*回收内存*/
+extern void free(void*ptr);
 #endif

@@ -3,10 +3,12 @@
 #include"stdio.h"
 #include"syscall.h"
 //函数可变参数宏
+typedef char* va_list;
 #define va_start(parg,argv) parg = (va_list*)&argv;                         //初始化参数指针
 #define va_arg(parg,type) (*((type*)((parg+=sizeof(type))-sizeof(type))))   //移动参数指针并返回函数参数
 #define va_end(parg) parg = NULL                                            //将参数指针置空
 
+/*将整型val按base进制转换为相应字符串放入buf中*/
 static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
 {   if(val==0){
         buf[0]='0';
@@ -32,6 +34,7 @@ static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
     return len;
 }
 
+/*将格式化字符串转换后放入str缓冲区*/
 uint32_t vsprintf(char*str,const char*format,va_list ap)
 {
     ap+=sizeof(char*);  //跳过format
@@ -85,6 +88,7 @@ uint32_t vsprintf(char*str,const char*format,va_list ap)
     return strlen(str);
 }
 
+/* 格式化打印 */
 uint32_t printf(const char* format,...)
 {
     va_list arg = NULL;
@@ -92,5 +96,15 @@ uint32_t printf(const char* format,...)
     char buf[1024]={0}; 
     uint32_t len = vsprintf(buf,format,arg);
     len = write(buf);
+    return len;
+}
+
+/* 将格式化字符串转换后放入缓冲区buf */
+uint32_t sprintf(char*buf,const char*format,...)
+{
+    va_list args;
+    va_start(args,format);
+    uint32_t len=vsprintf(buf,format,args);
+    va_end(args);
     return len;
 }

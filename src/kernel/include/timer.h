@@ -8,7 +8,10 @@
 #define COUNTER0_NO 0b00
 #define COUNTER0_RW 0b11
 #define COUNTER0_MODE 2
+#include"stdint.h"
 extern void initTimer(void);
+
+extern void mtime_sleep(uint32_t m_seconds);
 
 extern int ticks;
 #endif

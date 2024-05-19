@@ -33,7 +33,7 @@ void* createPDT()
 }
 
 extern void int_exit(void);
-static void* processBooter(void* filename)
+static void processBooter(void* filename)
 {
 	void * function = filename; 			/*可执行文件加载到内存*/
 	struct task_struct* pcb = getpcb();     
@@ -48,9 +48,8 @@ static void* processBooter(void* filename)
 	proc_stack->esp = (void*)((uint32_t)mallocOnePageByVaddr(PF_USER,(void*)USER_STACK3_VADDR_START)+PG_SIZE); 
 	proc_stack->ss = SELECTOR_U_DATA;	
 	struct intr_stack* user_stack = (struct intr_stack*)((uint32_t)proc_stack->esp-sizeof(struct intr_stack));
-	memcpy(user_stack,proc_stack,sizeof(struct intr_stack));
+	memcpy(user_stack,proc_stack,sizeof(struct intr_stack)); //拷贝用户栈空间
 	asm volatile("movl %0,%%esp;jmp int_exit"::"g"(proc_stack):"memory");
-	return NULL;
 }
 
 /* 激活页表 */
