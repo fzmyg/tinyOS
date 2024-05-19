@@ -7,7 +7,7 @@ static inline void outb(uint16_t port,uint8_t data)
 	asm volatile ("out %b0,%w1"::"a"(data),"d"(port));
 }
 /*ouput serious of data to a port*/
-static inline void outsb(uint16_t port,const void*addr,uint32_t word_cnt)
+static inline void outsw(uint16_t port,const void*addr,uint32_t word_cnt)
 {
 	asm volatile ("cld; rep outsw":"+S"(addr),"+c"(word_cnt):"d"(port));
 }

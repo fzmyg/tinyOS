@@ -76,5 +76,4 @@ void initKeyBoard(void)
 	put_str("init keyboard start\n");
 	initIOQueue(&kbd_buf);
 	put_str("init keyboard end \n");
-
 }
