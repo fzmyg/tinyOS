@@ -11,6 +11,7 @@
 #include"process.h"
 #include"stdio.h"
 #include"syscall.h"
+#include"syscall_init.h"
 
 #define UNUSED __attribute__((unused))
 
@@ -24,7 +25,7 @@ int main(void)
 	init_all();
 	//thread_start("kernel_thread_a",31,&threadA,"A  ");
 	//thread_start("kernel_thread_b",31,&threadA,"B  ");
-	enableInt();
+	char*p = (char*)sys_malloc(21);
 	executeProcess(userProcessA,"user process A");
 	while(1){};
 	return 0;

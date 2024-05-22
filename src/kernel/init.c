@@ -12,7 +12,6 @@
 void init_all(void)
 {
 	put_str("init_all start\n");
-	ide_init();
 	idt_init();
 	initMemPool();
 	initThread();
@@ -21,5 +20,7 @@ void init_all(void)
 	initKeyBoard();
 	initTss();
 	initSyscall();
+	enableInt();
+	initIDE();
 	put_str("init all done\n");
 }

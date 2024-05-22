@@ -6,3 +6,4 @@ loader*
 mbr.bin
 os_kernel*
 settings.json
+bug.log

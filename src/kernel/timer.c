@@ -6,7 +6,8 @@
 #include"interrupt.h"
 #include"global.h"
 #define mil_seconds_per_intr (1000/IRQ0_FREQUENCY) //每次时钟中断间隔 单位:ms
-int ticks;
+
+int ticks; //总运行滴答 （钟表）
 
 static void setPitFrequency(uint8_t counter_port,uint8_t counter_no,uint8_t rwl,uint8_t counter_mode,uint16_t counter_val)
 {
