@@ -85,8 +85,9 @@ static void select_sector(struct disk*hd,uint32_t lba_addr,uint8_t cnt)
 }
 
 /*选择命令*/
-static void out_cmd(struct ide_channel*channel,uint8_t cmd)
+static void out_cmd(struct disk* hd,uint8_t cmd)
 {
+    struct ide_channel* channel = hd->my_channel;
     channel->expecting_int = true;  //期待中断位设置为1
     outb(reg_command(channel),cmd); //向command端口输出命令
 }
@@ -132,7 +133,7 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
     uint32_t i = 0 ;
     for(i=0;i<edge_cnt;i++){
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
-        out_cmd(hd->my_channel,(uint8_t)CMD_READ_SECTOR);//选择硬盘操作
+        out_cmd(hd,(uint8_t)CMD_READ_SECTOR);//选择硬盘操作
         
         /**********阻塞等待硬盘中断唤醒********/
         semaDown(&hd->my_channel->disk_working);
@@ -147,7 +148,7 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
     }
     /*操作不足256扇区的部分*/
     select_sector(hd,lba_addr,reserve_cnt);
-    out_cmd(hd->my_channel,CMD_READ_SECTOR);
+    out_cmd(hd,CMD_READ_SECTOR);
     semaDown(&hd->my_channel->disk_working);
     if(busy_wait(hd)==false){
         char error[64];
@@ -170,7 +171,7 @@ void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t c
     uint32_t i = 0 ;
     for(i=0;i<edge_cnt;i++){
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
-        out_cmd(hd->my_channel,(uint8_t)CMD_READ_SECTOR);//选择硬盘操作
+        out_cmd(hd,(uint8_t)CMD_WRITE_SECTOR);//选择硬盘操作
         
         /**********阻塞等待硬盘中断唤醒********/
         semaDown(&hd->my_channel->disk_working);
@@ -185,7 +186,7 @@ void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t c
     }
     /* 操作不足256扇区的部分 */
     select_sector(hd,lba_addr,reserve_cnt);
-    out_cmd(hd->my_channel,CMD_READ_SECTOR);
+    out_cmd(hd,CMD_READ_SECTOR);
     semaDown(&hd->my_channel->disk_working);
     if(busy_wait(hd)==false){
         char error[64];
@@ -226,7 +227,7 @@ static void identify_disk(struct disk*hd)
 {
     char id_info[512];
     select_disk(hd);
-    out_cmd(hd->my_channel,CMD_IDENTIFY);
+    out_cmd(hd,CMD_IDENTIFY);
     semaDown(&hd->my_channel->disk_working);
     if(busy_wait(hd)==false){
         char error[64];
@@ -307,7 +308,7 @@ static void adjustPartitionTable(char* buf)
     }
 }
 
-/* 初始化磁盘分区 */
+/* 从磁盘读取分区结构 初始化磁盘分区数据结构 */
 static void scanPart(struct disk* hd)
 {
     uint32_t lba_addr = 0;
@@ -347,7 +348,7 @@ static void scanPart(struct disk* hd)
                     primary_index++;  
                 }else{ //为子扩展分区
                     sprintf(hd->logic_parts[logic_index].name,"%s%d",hd->name,logic_index+5);           //初始化子拓展分区
-                    hd->logic_parts[logic_index].start_lba = ppte->start_lba/*逻辑分区内偏移*/ + ext_lba_base /*总拓展分区偏移*/ + ext_lba/*逻辑分区相对拓展分区偏移*/;  //初始化LBA起始地址
+                    hd->logic_parts[logic_index].start_lba = ppte->start_lba/*逻辑分区内偏移*/ + ext_lba_base /*总拓展分区相对磁盘偏移*/ + ext_lba/*逻辑分区相对拓展分区偏移*/;  //初始化LBA起始地址
                     hd->logic_parts[logic_index].sector_cnt = ppte->sec_cnt;                            //初始化扇区数
                     hd->logic_parts[logic_index].my_disk = hd;                                          //添加硬盘
                     list_append(&partition_list,&hd->logic_parts[logic_index].part_node);               //添加分区节点到分区链表
