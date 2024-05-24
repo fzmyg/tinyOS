@@ -293,7 +293,7 @@ void * sys_malloc(uint32_t size)
 	struct arena* arena=NULL;		  //申请内存起始地址
 	//acquireLock(&mem_pool->lock); 	  //修改物理池需主动获取锁
 	if(size>1024){ /*申请内存数大于1024B*/
-		uint32_t page_cnt = DIV_ROUND_UP(size+sizeof(struct arena),PG_SIZE); //
+		uint32_t page_cnt = DIV_ROUND_UP(size+sizeof(struct arena),PG_SIZE); //申请PG_SIZE整数被内存
 		arena = mallocPage(pf,page_cnt);
 		if(arena == NULL){	
 			//releaseLock(&mem_pool->lock);
