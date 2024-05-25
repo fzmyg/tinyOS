@@ -34,12 +34,17 @@ struct disk{
 struct ide_channel{
     char name[8];                   //*通道名称
     uint16_t disk_port_base;        //*硬盘操作起始端口号
-    uint8_t int_num;                //通道所用中断号
     struct lock channel_lock;       //*通道锁
-    bool expecting_int;             //标记正在等待硬盘中断
     struct semaphore disk_working;  //*用于阻塞，中断程序唤醒继续读或写
     struct disk disks[2];           //*通道上连接俩设备一个主盘一个从盘
+    
+    uint8_t int_num;                //通道所用中断号
+    bool expecting_int;             //标记正在等待硬盘中断
 };
+
+extern struct ide_channel channels[2];
+
+extern uint8_t channel_cnt;
 
 /*读取磁盘内容到buf*/
 extern void readDisk(void*const buf,struct disk*hd,uint32_t lba_addr,uint32_t cnt);

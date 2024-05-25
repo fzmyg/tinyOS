@@ -17,7 +17,9 @@ struct super_block{
     uint32_t data_start_lba;            //数据段起始lba地址
     uint32_t root_inode_index;          //root节点在inode表中的索引
     uint32_t dir_entry_size;            //每个目录表条目大小
+    uint32_t inode_size;			   //每个inode大小
 
+    char pad[456];
 }__attribute__((packed));
 
 #endif

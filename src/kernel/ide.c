@@ -238,10 +238,10 @@ static void identify_disk(struct disk*hd)
     char buf[64];
     uint8_t sn_start/*序列号起始地址*/= 10*2,sn_len=20/*序列号字节长度*/,md_start/*型号起始地址*/=26*2,md_len/**/=40;
     swap_pairs_bytes(id_info+sn_start,buf,sn_len);
-    printk("  MODULE: %s",buf); /*输出硬盘序列号*/
+    printk("  MODULE: %s\n",buf); /*输出硬盘序列号*/
     swap_pairs_bytes(id_info+md_start,buf,md_len);
     uint32_t sectors = *(uint32_t*)(id_info+60*2);
-    printk("  SECTORS: %d",sectors);/*输出硬盘块数*/
+    printk("  SECTORS: %d\n",sectors);/*输出硬盘块数*/
     printk("  CAPACITY :%dMB\n",sectors*512/1024/1024);/*输出硬盘容量*/
 }
 
@@ -311,34 +311,34 @@ static void adjustPartitionTable(char* buf)
 /* 从磁盘读取分区结构 初始化磁盘分区数据结构 */
 static void initPartitions(struct disk* hd)
 {
-    uint32_t lba_addr = 0;
-    uint32_t ext_lba_base = 0; //拓展分区总偏移
-    uint32_t ext_lba = 0;     //
-    uint32_t primary_index = 0;
-    uint32_t logic_index = 0;
-    bool first_read_tag = true;
-    int i = 0;
+    uint32_t lba_addr = 0;      //相对于硬盘0号扇区的偏移地址
+    uint32_t ext_lba_base = 0;  //拓展分区相对于硬盘0号扇区总偏移
+    uint32_t ext_lba = 0;       //逻辑分区相对于拓展分区偏移
+    uint32_t primary_index = 0; //主分区索引
+    uint32_t logic_index = 0;   //逻辑分区索引
+    bool first_read_tag = true; //用来标记是否第一次读取硬盘
+    int i = 0;  //遍历分区表
     while(1){
         char buf[512];
-        bool found_extend = false;
+        bool found_extend = false;     //标记是否有拓展分区
         readDisk(buf,hd,lba_addr,1); 
         if(first_read_tag == true){
             first_read_tag = false ;
             adjustPartitionTable(buf); //调整partitionTable 让最后一项为拓展分区项
         }
-        struct partition_table_entry * ppte = ((struct boot_sector*)buf)->partition_table; 
+        struct partition_table_entry * ppte = ((struct boot_sector*)buf)->partition_table; //获取分区表
         
-        for(;i<4;i++){
-            if(ppte->fs_type==0x05)/*拓展分区*/
+        for(;i<4;i++){ //第一次遍历4项，其余都遍历2项
+            if(ppte->fs_type==0x05)/*为拓展分区项*/
             {
                 lba_addr = ext_lba_base + ext_lba + ppte->start_lba;
-                if(ext_lba_base==0){                // 转到总扩展分区
-                    ext_lba_base = ppte->start_lba; // 设置ext_lba_base
-                }else{
-                    ext_lba = ppte->start_lba;     //下一项的总拓展分区内偏移
+                if(ext_lba_base==0){  //为主扩展分区项
+                    ext_lba_base = ppte->start_lba; // 初始化总拓展分区相对磁盘的偏移
+                }else{      //为子扩展分区项
+                    ext_lba = ppte->start_lba;      //更改为下一分区在拓展分区中的起始偏移
                 }
                 found_extend = true;
-                break;
+                break;      //退出2级循环
             }
             if(ppte->fs_type!=0) /*为有效分区*/
             {
@@ -363,15 +363,15 @@ static void initPartitions(struct disk* hd)
             ppte++;
         }
         if(found_extend == false){ 
-            break;
+            break;//链表结束则退出1级循环
         }
         else {
-            i=2;
+            i=2; //未结束则控制下一次遍历数量
         }
     }
 }
 
-/*初始化IDE硬盘*/
+/*初始化IDE硬盘 挂载通道到内存*/
 void initIDE()
 {
     put_str("ide_init start\n");
