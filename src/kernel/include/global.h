@@ -77,7 +77,7 @@ struct GdtDesc{
 	uint8_t limit_high_and_attr_high;//高4位段界限和高4位属性
 	uint8_t base_high_byte;  //高8位段基址
 };
-#define DIV_ROUND_UP(a,b) ((a+b-1)/b)
+#define DIV_ROUND_UP(a,b) (((a)+(b)-1)/(b))
 #define EFLAGS_IOPL_0 (0<<12)
 #define EFLAGS_MBS (1<<1)
 #define EFLAGS_IF_1 (1<<9)

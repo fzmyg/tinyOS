@@ -161,13 +161,13 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
 }
 
 /* 从buf中写入数据到硬盘 */
-void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
+void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t sector_cnt)
 {
     ASSERT(lba_addr<MAX_LBA);
     acquireLock(&hd->my_channel->channel_lock); //获取该通道锁
     select_disk(hd);  //选择硬盘，设置device寄存器
-    uint32_t reserve_cnt = cnt%256; //一次操作不足256扇区的部分
-    uint32_t edge_cnt = cnt/256;    //操作足够256扇区的数量
+    uint32_t reserve_cnt = sector_cnt%256; //一次操作不足256扇区的部分
+    uint32_t edge_cnt = sector_cnt/256;    //操作足够256扇区的数量
     uint32_t i = 0 ;
     for(i=0;i<edge_cnt;i++){
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
@@ -309,23 +309,26 @@ static void adjustPartitionTable(char* buf)
 }
 
 /* 从磁盘读取分区结构 初始化磁盘分区数据结构 */
-static void scanPart(struct disk* hd)
+static void initPartitions(struct disk* hd)
 {
     uint32_t lba_addr = 0;
     uint32_t ext_lba_base = 0; //拓展分区总偏移
     uint32_t ext_lba = 0;     //
     uint32_t primary_index = 0;
     uint32_t logic_index = 0;
-    bool tag = 0;
+    bool first_read_tag = true;
+    int i = 0;
     while(1){
         char buf[512];
+        bool found_extend = false;
         readDisk(buf,hd,lba_addr,1); 
-        if(tag == 0){
-            tag = 1 ;
+        if(first_read_tag == true){
+            first_read_tag = false ;
             adjustPartitionTable(buf); //调整partitionTable 让最后一项为拓展分区项
         }
         struct partition_table_entry * ppte = ((struct boot_sector*)buf)->partition_table; 
-        while(ppte->bootable==0x80){
+        
+        for(;i<4;i++){
             if(ppte->fs_type==0x05)/*拓展分区*/
             {
                 lba_addr = ext_lba_base + ext_lba + ppte->start_lba;
@@ -334,6 +337,7 @@ static void scanPart(struct disk* hd)
                 }else{
                     ext_lba = ppte->start_lba;     //下一项的总拓展分区内偏移
                 }
+                found_extend = true;
                 break;
             }
             if(ppte->fs_type!=0) /*为有效分区*/
@@ -355,8 +359,14 @@ static void scanPart(struct disk* hd)
 
                     logic_index++;
                 }
-                ppte++;
             }
+            ppte++;
+        }
+        if(found_extend == false){ 
+            break;
+        }
+        else {
+            i=2;
         }
     }
 }
@@ -395,7 +405,7 @@ void initIDE()
             sprintf(disk->name,"sd%c",'a'+dev_no);
             identify_disk(disk);
             if(dev_no!=0){ //若为从盘则扫描盘上分区表
-                scanPart(disk);
+                initPartitions(disk);
             }
             primary_index=0,logic_index=0;
         }
