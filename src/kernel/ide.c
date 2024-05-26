@@ -24,7 +24,7 @@
 /*status寄存器标属性*/
 #define ALT_STAT_BUSY_BIT  0x80 //硬盘正忙
 #define ALT_STAT_READY_BIT 0x40 //设备就绪
-#define ALT_STAT_DRQ_BIT   0x08 //设备准备好数据
+#define DATA_READY_BIT   0x08 //设备准备好数据
 /*device寄存器属性*/
 #define DEV_MBS_BIT        0xa0 //固定值
 #define DEV_LBA_BIT        0x40 //LBA寻址模式
@@ -40,7 +40,6 @@ uint8_t channel_cnt;
 struct ide_channel channels[2]; /*通道0为主盘通道，通道1为从盘通道*/
 
 int32_t ext_lba_base = 0;           //用于记录总扩展分区的起始lba，初始为0，partition_scan时以此为标记
-uint8_t primary_index = 0,logic_index = 0; //用来记录硬盘主分区和逻辑分区的下标
 struct list partition_list;                //分区队列
 /*分区表项*/
 struct partition_table_entry{
@@ -106,14 +105,14 @@ static void write2disk(struct disk*hd,void*buf,uint8_t sec_cnt)
     outsw(reg_data(hd->my_channel),buf,byte_size/2);   
 }
 
-/*判断硬盘是否就绪，如果未就绪就使当前线程睡眠*/
-static bool busy_wait(struct disk*hd)
+/*判断硬盘数据是否就绪，如果未就绪就使当前线程睡眠*/
+static bool waitDiskData(struct disk*hd)
 {
     
     uint32_t time_limit = 30 * 1000;                //最多等待30s
     while(time_limit>0){
         uint8_t status = inb(reg_status(hd->my_channel));
-        if((status&ALT_STAT_DRQ_BIT)!=false) //数据准备好了
+        if((status&DATA_READY_BIT)!=false) //准备好了
             return true;
         else
             mtime_sleep(10);
@@ -129,17 +128,17 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
     acquireLock(&hd->my_channel->channel_lock); //获取该通道锁
     select_disk(hd);  //选择硬盘，设置device寄存器
     uint32_t reserve_cnt = cnt%256; //一次操作不足256扇区的部分
-    uint32_t edge_cnt = cnt/256;    //操作足够256扇区的数量
+    uint32_t full_batches_cnt = cnt/256;    //操作足够256扇区的数量
     uint32_t i = 0 ;
-    for(i=0;i<edge_cnt;i++){
+    for(i=0;i<full_batches_cnt;i++){
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
         out_cmd(hd,(uint8_t)CMD_READ_SECTOR);//选择硬盘操作
+        
         
         /**********阻塞等待硬盘中断唤醒********/
         semaDown(&hd->my_channel->disk_working);
         /************************************/
-
-        if(busy_wait(hd)==false){ /* 若硬盘操作出错 */
+        if(waitDiskData(hd)==false){ /* 若硬盘操作出错 */
             char error[64];
             sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
             PANIC(error);
@@ -150,7 +149,7 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
     select_sector(hd,lba_addr,reserve_cnt);
     out_cmd(hd,CMD_READ_SECTOR);
     semaDown(&hd->my_channel->disk_working);
-    if(busy_wait(hd)==false){
+    if(waitDiskData(hd)==false){
         char error[64];
         sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
         PANIC(error);
@@ -167,34 +166,34 @@ void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t s
     acquireLock(&hd->my_channel->channel_lock); //获取该通道锁
     select_disk(hd);  //选择硬盘，设置device寄存器
     uint32_t reserve_cnt = sector_cnt%256; //一次操作不足256扇区的部分
-    uint32_t edge_cnt = sector_cnt/256;    //操作足够256扇区的数量
+    uint32_t full_batches_cnt = sector_cnt/256;    //操作足够256扇区的数量
     uint32_t i = 0 ;
-    for(i=0;i<edge_cnt;i++){
+    for(i=0;i<full_batches_cnt;i++){
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
         out_cmd(hd,(uint8_t)CMD_WRITE_SECTOR);//选择硬盘操作
         
-        /**********阻塞等待硬盘中断唤醒********/
-        semaDown(&hd->my_channel->disk_working);
-        /************************************/
-
-        if(busy_wait(hd)==false){ /* 若硬盘操作出错 */
+        if(waitDiskData(hd)==false){  /* 判断硬盘准备命令的状态 */
             char error[64];
             sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
             PANIC(error);
         }
         write2disk(hd,(char*)buf+(i*256*512),(uint8_t)256); //向buf中读取数据
+
+        /***********写入成功则会引发硬盘中断唤醒该进程********/
+        semaDown(&hd->my_channel->disk_working);
+        /**************************************************/
     }
     /* 操作不足256扇区的部分 */
     select_sector(hd,lba_addr,reserve_cnt);
-    out_cmd(hd,CMD_READ_SECTOR);
-    semaDown(&hd->my_channel->disk_working);
-    if(busy_wait(hd)==false){
+    out_cmd(hd,CMD_WRITE_SECTOR);
+    
+    if(waitDiskData(hd)==false){ //判断硬盘准备状态
         char error[64];
         sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
         PANIC(error);
     }
     write2disk(hd,(char*)buf+(i*256*512),reserve_cnt);
-
+    semaDown(&hd->my_channel->disk_working);
     releaseLock(&hd->my_channel->channel_lock);     //释放通道锁
 }
 
@@ -229,7 +228,7 @@ static void identify_disk(struct disk*hd)
     select_disk(hd);
     out_cmd(hd,CMD_IDENTIFY);
     semaDown(&hd->my_channel->disk_working);
-    if(busy_wait(hd)==false){
+    if(waitDiskData(hd)==false){
         char error[64];
         sprintf(error,"%s identify failed!!!\n",hd->name);
         PANIC(error);
@@ -250,6 +249,7 @@ static void identify_disk(struct disk*hd)
     uint8_t primary_index = 0,logic_index = 0; //用来记录硬盘主分区和逻辑分区的下标*/
 static void scanPartition(struct disk*hd,uint32_t ext_lba)
 {
+    uint32_t logic_index = 0,primary_index =0;
     struct boot_sector * bs = sys_malloc(sizeof(struct boot_sector));   //申请512byte内存
     ASSERT(bs!=NULL);
     readDisk(bs,hd,ext_lba,1); //从硬盘起始扇区读取MBR或EBR
@@ -287,7 +287,6 @@ static void scanPartition(struct disk*hd,uint32_t ext_lba)
     } 
     sys_free(bs);
 }
-
 /*调整MBR分区表，使最后一项为拓展分区项*/
 static void adjustPartitionTable(char* buf)
 {
@@ -331,12 +330,13 @@ static void initPartitions(struct disk* hd)
         for(;i<4;i++){ //第一次遍历4项，其余都遍历2项
             if(ppte->fs_type==0x05)/*为拓展分区项*/
             {
-                lba_addr = ext_lba_base + ext_lba + ppte->start_lba;
+                
                 if(ext_lba_base==0){  //为主扩展分区项
                     ext_lba_base = ppte->start_lba; // 初始化总拓展分区相对磁盘的偏移
                 }else{      //为子扩展分区项
                     ext_lba = ppte->start_lba;      //更改为下一分区在拓展分区中的起始偏移
                 }
+                lba_addr = ext_lba_base + ext_lba ; //下一个拓展分区的起始地址 = 总拓展分区偏移 +  相对拓展分区偏移
                 found_extend = true;
                 break;      //退出2级循环
             }
@@ -380,8 +380,8 @@ void initIDE()
     struct ide_channel*channel;              
     int i = 0;
     for(i=0;i<channel_cnt;i++){             //初始化两通道
-        memset(channel,0,sizeof(struct ide_channel));
         channel = channels + i; 
+        memset(channel,0,sizeof(struct ide_channel));
         sprintf(channel->name,"ide%d",i);
         switch(i){
             case 0:
@@ -407,7 +407,6 @@ void initIDE()
             if(dev_no!=0){ //若为从盘则扫描盘上分区表
                 initPartitions(disk);
             }
-            primary_index=0,logic_index=0;
         }
     }
     put_str("ide_init done\n");

@@ -46,6 +46,8 @@ extern struct ide_channel channels[2];
 
 extern uint8_t channel_cnt;
 
+extern struct list partition_list;
+
 /*读取磁盘内容到buf*/
 extern void readDisk(void*const buf,struct disk*hd,uint32_t lba_addr,uint32_t cnt);
 

@@ -119,8 +119,8 @@ p_mode_start:
 	or esp,0xc0000000
 	call read_kernel
 	call init_kernel
-	mov esp,0xc009f000
-	jmp  SELECTOR_CODE:KERNEL_ENTER_POINT
+	mov esp,0xc009f000		;保留区域最高位
+	jmp  SELECTOR_CODE:KERNEL_ENTER_POINT 
 
 print:
 	mov ax,SELECTOR_VIDEO

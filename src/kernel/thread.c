@@ -152,7 +152,7 @@ void initThread(void)
 	list_init(&thread_ready_list);
 	list_init(&thread_all_list);
 	make_main_thread();
-	thread_start("idle",10,&idle,NULL); //初始化idle线程
+	idle_thread = thread_start("idle",10,&idle,NULL); //初始化idle线程
 	put_str("init thread done\n");
 }
 
