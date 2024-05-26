@@ -155,7 +155,6 @@ void readDisk(void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t cnt)
         PANIC(error);
     }
     read_form_disk(hd,(char*)buf+(i*256*512),reserve_cnt);
-
     releaseLock(&hd->my_channel->channel_lock);     //释放通道锁
 }
 
