@@ -172,11 +172,6 @@ void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t s
         select_sector(hd,lba_addr,(uint8_t)256); //选择扇区数和起始地址
         out_cmd(hd,(uint8_t)CMD_WRITE_SECTOR);//选择硬盘操作
         
-        if(waitDiskData(hd)==false){  /* 判断硬盘准备命令的状态 */
-            char error[64];
-            sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
-            PANIC(error);
-        }
         write2disk(hd,(char*)buf+(i*256*512),(uint8_t)256); //向buf中读取数据
 
         /***********写入成功则会引发硬盘中断唤醒该进程********/
@@ -186,12 +181,6 @@ void writeDisk(const void*const buf,struct disk* hd,uint32_t lba_addr,uint32_t s
     /* 操作不足256扇区的部分 */
     select_sector(hd,lba_addr,reserve_cnt);
     out_cmd(hd,CMD_WRITE_SECTOR);
-    
-    if(waitDiskData(hd)==false){ //判断硬盘准备状态
-        char error[64];
-        sprintf(error,"%s read sector %d failed!!!!\n",hd->name,lba_addr+i*256);
-        PANIC(error);
-    }
     write2disk(hd,(char*)buf+(i*256*512),reserve_cnt);
     semaDown(&hd->my_channel->disk_working);
     releaseLock(&hd->my_channel->channel_lock);     //释放通道锁
