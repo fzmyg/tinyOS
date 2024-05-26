@@ -62,7 +62,7 @@ static void initThreadStack(struct task_struct*thread,thread_func func,void*args
 	thread->self_kernel_stack -= (sizeof(struct thread_stack));
 	struct thread_stack* thread_stack = (struct thread_stack*)(thread->self_kernel_stack);
 	thread_stack->eip = &execFunc;
-	thread_stack->unused_retaddr = &threadRecoverer;
+	thread_stack->retaddr = &threadRecoverer;
 	thread_stack->function = func;
 	thread_stack->func_args = args;
 	thread_stack->ebp=thread_stack->ebx=thread_stack->edi=thread_stack->esi=0;
@@ -110,7 +110,6 @@ static void make_main_thread(void)
 /*
  *Description: get current PCB and judge the status of PCB 
  *status:(1)running time end (2)blocked (3)died
- *
  * */
 void schedule(void)
 {
@@ -123,7 +122,6 @@ void schedule(void)
 		cur_pcb -> ticks = cur_pcb->priority;
 		cur_pcb -> status = TASK_READY;
 	}else if (cur_pcb -> status == TASK_DIED){
-		/**/
 		list_remove(&cur_pcb->all_node);
 	}else{
 

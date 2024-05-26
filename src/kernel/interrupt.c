@@ -183,11 +183,11 @@ static void int_0x20_handler(void)
 	enum int_status stat = closeInt();
         ticks++;
 	setIntStatus(stat);
-        if(cur_thread->ticks==0){
-                schedule();
-        }else{
-                cur_thread->ticks --;
-        }
+	if(cur_thread->ticks==0){
+			schedule();
+	}else{
+			cur_thread->ticks --;
+	}
 }
 
 static void int_0x21_handler(void)

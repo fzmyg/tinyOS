@@ -48,7 +48,7 @@ typedef struct thread_stack{
 	uint32_t esi;
 	
 	void(*eip)(thread_func fun,void*args);
-	void* unused_retaddr;  	//线程回收器地址
+	void* retaddr;  	//线程回收器地址
 	thread_func function;
 	void*func_args;
 }threadStack;
