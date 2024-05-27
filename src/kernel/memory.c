@@ -332,7 +332,7 @@ void * sys_malloc(uint32_t size)
 			setIntStatus(stat);
 		}
 		struct mem_block* block = NULL;
-		struct list_elem* pnode = list_pop(&(arena->desc->free_list)); 
+		struct list_elem* pnode = list_pop(&(descs[desc_index].free_list)); 
 		block = (struct mem_block*)((uint32_t)pnode-offset(struct mem_block,free_elem));
 		arena=block2arena(block);
 		arena -> cnt --;
