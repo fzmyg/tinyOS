@@ -6,6 +6,7 @@
 #include"string.h"
 #include"interrupt.h"
 #include"tss.h"
+#include"debug.h"
 /*
  * 初始化用户虚拟内存池
  * */
@@ -14,8 +15,9 @@ void initUserVaddrPool(struct task_struct*pthread)
 	pthread->vaddr_pool.vm_start = USER_VADDR_START;
 	uint32_t bitmap_pg_cnt = DIV_ROUND_UP((0xc0000000-USER_VADDR_START)/PG_SIZE/8,PG_SIZE);
 	void*pbitmap = mallocKernelPage(bitmap_pg_cnt);
+	ASSERT(pbitmap!=NULL);
 	pthread->vaddr_pool.bitmap.pbitmap = pbitmap;
-	pthread->vaddr_pool.bitmap.bitmap_byte_len = (0xc0000000-USER_VADDR_START)/PG_SIZE/8;
+	pthread->vaddr_pool.bitmap.bitmap_byte_len = DIV_ROUND_UP((0xc0000000-USER_VADDR_START),PG_SIZE*8);
 	initBitmap(&pthread->vaddr_pool.bitmap);
 }
 

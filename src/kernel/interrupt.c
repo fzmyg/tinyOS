@@ -133,11 +133,11 @@ static void exceptionInit(void)
 void idt_init(void)
 {
 	put_str("idt init start\n");
-	idtDescInit();		//init idt : map interrupt vector address to every interrupt desciptor 
-	picInit();		//init 8295A
-	exceptionInit();	//init 
+	idtDescInit();		//初始化IDT表 
+	picInit();			//初始化8259A中断控制芯片
+	exceptionInit();	//注册中断函数
 	uint64_t idt_operand = ((uint64_t)(uint32_t)idt)<<16 | (sizeof(idt)-1);
-	asm volatile ("lidt %0;":"+m"(idt_operand));
+	asm volatile ("lidt %0;":"+m"(idt_operand)); //加载中断描述符表到idtr
 	put_str("idt init done\n");
 }
 
