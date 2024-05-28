@@ -142,7 +142,6 @@ static void mapVaddr2Paddr(void*_vaddr,void* _paddr)
 		ASSERT((*pte_ptr & PG_P_1) == 0);
 		*pte_ptr = ((paddr & 0xfffff000) | PG_US_U | PG_RW_W | PG_P_1);/*页表存在则直接映射*/
 	}
-
 }
 
 /*
@@ -165,6 +164,7 @@ void* mallocPage(enum pool_flags pf,uint32_t pg_cnt)
 		if(phyaddr_start == NULL) return NULL;
 		mapVaddr2Paddr((void*)((uint32_t)vmaddr_start+(count-1)*PG_SIZE),(void*)phyaddr_start);
 	}	
+	memset(vmaddr_start,0,pg_cnt*PG_SIZE);
 	return vmaddr_start;
 }
 /*
@@ -173,7 +173,7 @@ void* mallocPage(enum pool_flags pf,uint32_t pg_cnt)
 void* mallocKernelPage (uint32_t pg_cnt)
 {
 	void*vmaddr_start = mallocPage(PF_KERNEL,pg_cnt);
-	if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
+	//if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
 	return vmaddr_start;
 }
 /*
@@ -182,7 +182,7 @@ void* mallocKernelPage (uint32_t pg_cnt)
 void* mallocUserPage(uint32_t pg_cnt)
 {
 	void*vmaddr_start = mallocPage(PF_USER,pg_cnt);
-	if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
+	//if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
 	return vmaddr_start;
 }
 /*
@@ -383,7 +383,7 @@ static void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 		unMapVaddr(vaddr);    /* 页表项P位置0*/
 		vaddr+= PG_SIZE;
 	}
-	vfree(pf,_vaddr,pg_cnt);  /*虚拟内促池置0*/
+	vfree(pf,_vaddr,pg_cnt);  /*虚拟内存池置0*/
 }
 
 void sys_free(void*vaddr)
