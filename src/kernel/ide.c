@@ -40,7 +40,7 @@ uint8_t channel_cnt;
 struct ide_channel channels[2]; /*通道0为主盘通道，通道1为从盘通道*/
 
 int32_t ext_lba_base = 0;           //用于记录总扩展分区的起始lba，初始为0，partition_scan时以此为标记
-struct list partition_list;                //分区队列
+struct list partition_list;         //分区队列，保存所有分区
 /*分区表项*/
 struct partition_table_entry{
     uint8_t bootable;        //*可否引导  0x80可引导 0x00不可引导

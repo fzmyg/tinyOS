@@ -6,7 +6,7 @@
 #include"string.h"
 #include"memory.h"
 
-void* syscall_table[SYSCALL_NR];
+void* syscall_table[SYSCALL_NR]={0};
 
 static pid_t sys_getpid(void)
 {
