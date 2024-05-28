@@ -101,10 +101,35 @@ static void format_partition(struct partition*part)
     sys_free((void*)buf);
 }  
 
+/* 挂载分区上的文件系统元信息 */
+static void mountPartion(struct partition*part)
+{
+    printk("mount partition %s start\n",part->name);
+    struct super_block*sb = (struct super_block*)sys_malloc(sizeof(struct super_block));
+    ASSERT(sb!=NULL);
+    part->sb = sb;
+    readDisk(sb,part->my_disk,part->start_lba+1,1); //硬盘中读取超级块
+    //读取inode位图和块位图
+    uint8_t * buf = (uint8_t*)sys_malloc(SECTOR_SIZE*sb->block_bitmap_sector_cnt);
+    ASSERT(buf!=NULL);
+    readDisk(buf,part->my_disk,sb->block_bitmap_lba,sb->block_bitmap_sector_cnt);
+    part->block_bitmap.pbitmap = buf;
+    part->block_bitmap.bitmap_byte_len = SECTOR_SIZE*sb->block_bitmap_sector_cnt;
+
+    buf = sys_malloc(SECTOR_SIZE*sb->inode_bitmap_sector_cnt);
+    ASSERT(buf!=NULL);
+    readDisk(buf,part->my_disk,sb->inode_bitmap_lba,sb->inode_bitmap_sector_cnt);
+    part->inode_bitmap.pbitmap=buf;
+    part->inode_bitmap.bitmap_byte_len = SECTOR_SIZE * sb->inode_bitmap_sector_cnt;    
+    list_init(&part->open_inodes);
+    printk("mount partition %s done\n",part->name);
+}
+
+
 /*扫描通道上设备的分区，在分区中创建文件系统*/
 void initFileSystem()
 {
-    printk("init_file_system start\n");
+    printk("init file system start\n");
     struct super_block* sb = sys_malloc(SECTOR_SIZE);
     ASSERT(sb!=NULL);
     uint32_t i = 0;
@@ -131,6 +156,9 @@ void initFileSystem()
                 readDisk(sb,&channels[i].disks[dev_index],part[index].start_lba + 1,1); //读取硬盘超级块
                 if(sb->magic_number != 0x20040104) //文件系统不存在
                     format_partition(part);
+                
+                if(strcmp(part[index].name,"sdb1")==0)
+                    mountPartion(&part[index]);
             }
         }
     }
