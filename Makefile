@@ -100,4 +100,4 @@ all: install_mbr install_loader lib install_kernel
 
 .PHONY: clean
 clean:	
-	rm -rf ./src/bin/* ./src/bin/*.o ./src/kernel/bin/*.o ${LIB_KERNEL_DIR}/bin/*.o
+	rm -rf ./src/bin/* ./src/bin/*.o ./src/kernel/bin/*.o ${LIB_KERNEL_DIR}/bin/*.o ${LIB_USER_DIR}/bin/*.o

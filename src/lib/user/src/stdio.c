@@ -3,6 +3,8 @@
 #include"stdio.h"
 #include"syscall.h"
 
+
+
 /*将整型val按base进制转换为相应字符串放入buf中*/
 static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
 {   if(val==0){
@@ -32,7 +34,7 @@ static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
 /*将格式化字符串转换后放入str缓冲区*/
 uint32_t vsprintf(char*const str,const char*format,va_list ap)
 {
-    ap+=sizeof(char*);  //跳过format
+    ap+=sizeof(const char*);  //跳过format
     char* pbuf = str;
     int translate_tag = 0;
     while(*format){
@@ -56,13 +58,13 @@ uint32_t vsprintf(char*const str,const char*format,va_list ap)
                     pbuf+=len;
                     break;
                 case 's': ;
-                    s = va_arg(ap,char*);
+                    s = (char*)va_arg(ap,char*);
                     len = strlen(s);
                     strncpy(pbuf,s,len);
                     pbuf+=len;
                     break;
                 case 'c': ;
-                    ch = va_arg(ap,char);
+                    ch = (char)va_arg(ap,int);
                     *pbuf=ch;
                     pbuf++;
                     break;

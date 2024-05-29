@@ -33,7 +33,7 @@ uint32_t scanBitmap(Bitmap*bitmap,uint32_t cnt)
 	ASSERT(bitmap!=NULL);
 	uint32_t byte_index = 0;
 	//long step to search empty bit
-	while(bitmap->pbitmap[byte_index] == 0xff && cnt < bitmap->bitmap_byte_len)
+	while(bitmap->pbitmap[byte_index] == 0xff && byte_index < bitmap->bitmap_byte_len)
 		byte_index ++ ;
 	//ASSERT(byte_index < bitmap->bitmap_byte_len);
 	if(byte_index == bitmap->bitmap_byte_len) /*not found*/
@@ -45,7 +45,7 @@ uint32_t scanBitmap(Bitmap*bitmap,uint32_t cnt)
 
 	while(bit_left-- >0)
 	{
-		if(bitIsUsed(bitmap,next_bit)==0){
+		if(bitIsUsed(bitmap,next_bit)==false){
 			count++;
 		}else{
 			count=0;

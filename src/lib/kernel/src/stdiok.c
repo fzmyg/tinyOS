@@ -5,7 +5,7 @@
 uint32_t printk(const char* format,...)
 {
     va_list arg;
-    va_start(arg,format);
+    va_start(arg,format); //char* arg = char*(&format);
 
     char buf[1024]={0};
     uint32_t len = vsprintf(buf,format,arg);
