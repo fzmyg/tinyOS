@@ -13,6 +13,6 @@ extern bool bitIsUsed(Bitmap*bitmap,uint32_t bit_index);
  * Description: find continuous cnt bit 
  * Return     : for successful:return the first bit_index of bitmap,failed return -1
  * */
-extern uint32_t  scanBitmap(Bitmap*bitmap,uint32_t cnt);
+extern int32_t  scanBitmap(Bitmap*bitmap,uint32_t cnt);
 extern void setBitmap(Bitmap*bitmap,uint32_t bit_index,uint8_t value);
 #endif

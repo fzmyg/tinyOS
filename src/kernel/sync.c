@@ -47,7 +47,7 @@ void semaUp(struct semaphore*psema)
 	enum int_status old_status = closeInt();
 	ASSERT(psema->value == 0);
 	if(!list_empty(&psema->waiters)){
-		struct task_struct*thread_blocked = (struct task_struct*)elem2PCBentry(struct task_struct,ready_node,list_pop(&psema->waiters));//从等待进程中获取进程PCB
+		struct task_struct*thread_blocked = (struct task_struct*)elem2entry(struct task_struct,ready_node,list_pop(&psema->waiters));//从等待进程中获取进程PCB
 		thread_unblock(thread_blocked);		//将阻塞的进程加入到线程就绪队列
 	}
 	psema->value++;	

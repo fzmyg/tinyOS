@@ -38,7 +38,7 @@ static void format_partition(struct partition*part)
     sb.inode_table_lba = part->start_lba + boot_sector_cnt + super_block_sector_cnt + block_bitmap_sector_cnt + inode_bitmap_sector_cnt;
     sb.inode_table_sector_cnt = inode_table_sector_cnt;
     sb.data_start_lba = part->start_lba + boot_sector_cnt + super_block_sector_cnt + block_bitmap_sector_cnt + inode_bitmap_sector_cnt + inode_table_sector_cnt;
-    sb.root_inode_index = 0;
+    sb.root_inode_no = 0;
     sb.dir_entry_size =  sizeof(struct dir_entry);
     sb.inode_size = sizeof(struct inode);
 
@@ -79,7 +79,7 @@ static void format_partition(struct partition*part)
  * 6.将跟目录inode数据区写入磁盘
  * ******************************/
     struct inode* inode = (struct inode*) buf;
-    inode->i_index=0;
+    inode->i_no=0;
     inode->i_size = sizeof(struct dir_entry)*2;
     inode->i_sectors[0] = sb.data_start_lba;
     writeDisk(buf,part->my_disk,sb.inode_table_lba,1);

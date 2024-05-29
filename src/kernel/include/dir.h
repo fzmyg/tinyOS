@@ -10,7 +10,7 @@
 struct dir{
     struct inode* inode;
     uint32_t dir_pos;
-    uint8_t dir_buf[512];
+    uint8_t dir_buf[512]; //页目录数据缓冲区
 };
 
 /* 目录的inode指向的数据段*/

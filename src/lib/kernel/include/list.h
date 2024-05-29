@@ -6,7 +6,7 @@
 
 #define offset(struct_type,struct_mumber_name) ((uint32_t)(&((struct_type *)0)->struct_mumber_name))
 
-#define elem2PCBentry(struct_type,struct_mumber_name,elem_ptr) ((uint32_t)elem_ptr - offset(struct_type,struct_mumber_name))
+#define elem2entry(struct_type,struct_mumber_name,elem_ptr) ((uint32_t)elem_ptr - offset(struct_type,struct_mumber_name))
 
 typedef struct list_elem{
 	struct list_elem*prev,*next;

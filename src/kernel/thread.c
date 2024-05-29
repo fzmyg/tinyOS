@@ -6,6 +6,8 @@
 #include"list.h"
 #include"print.h"
 #include"process.h"
+#include"sync.h"
+#include"global.h"
 struct task_struct* main_thread;
 struct list thread_ready_list;
 struct list thread_all_list;
@@ -13,6 +15,45 @@ static struct list_elem* thread_tag;
 struct task_struct * idle_thread;
 
 #define UNUSED __attribute__((unused))
+
+#define MAX_PROCESS_CNT 4096
+
+struct pid_pool{
+	struct lock lock;
+	struct Bitmap bitmap;
+};
+
+struct pid_pool pid_pool;
+
+static void initPidPool(void){
+	pid_pool.bitmap.pbitmap = sys_malloc(DIV_ROUND_UP(MAX_PROCESS_CNT,8));
+	ASSERT(pid_pool.bitmap.pbitmap!=NULL);
+	pid_pool.bitmap.bitmap_byte_len = DIV_ROUND_UP(MAX_PROCESS_CNT,8);
+	setBitmap(&pid_pool.bitmap,0,1);
+	initLock(&pid_pool.lock);
+}
+
+pid_t createPid(void)
+{
+	acquireLock(&pid_pool.lock);
+	int bite_index = 0;
+	for(;bite_index<MAX_PROCESS_CNT;bite_index++){
+		if(bitIsUsed(&pid_pool.bitmap,bite_index)==false){
+			setBitmap(&pid_pool.bitmap,bite_index,1);
+			return bite_index+1;
+		}
+	}
+	releaseLock(&pid_pool.lock);
+	return -1;
+}
+
+void remotePid(pid_t pid)
+{
+	acquireLock(&pid_pool.lock);
+	ASSERT(bitIsUsed(&pid_pool.bitmap,pid-1)==true);
+	setBitmap(&pid_pool.bitmap,pid-1,0);
+	releaseLock(&pid_pool.lock);
+}
 
 /*系统空闲时运行的线程*/
 static void idle(void* arg UNUSED)
@@ -51,6 +92,14 @@ static void initThreadBase(struct task_struct* thread,const char*name,int prio)
 	thread->ticks = prio;
 	thread->elapsed_ticks = 0;
 	thread->pgdir_vaddr = NULL;
+	thread->fd_table[0]=0;
+	thread->fd_table[1]=1;
+	thread->fd_table[2]=2;
+	int i = 3;
+	for(;i<MAX_FILES_OPEN_PER_PROCESS;i++){
+		thread->fd_table[i]=-1;
+	}
+
 	thread->stack_magic = 0x20040104;
 }
 /*init task_struct stack data*/
@@ -104,6 +153,8 @@ static void make_main_thread(void)
 	ASSERT(!find_elem(&thread_all_list,&main_thread->all_node));
 	list_append(&thread_all_list,&main_thread->all_node); 
 	thread_tag = &main_thread->ready_node;
+	initPidPool();
+	main_thread->pid = 1;
 }
 
 
@@ -131,7 +182,7 @@ void schedule(void)
 		thread_unblock(idle_thread);
 	}
 	thread_tag =list_pop(&thread_ready_list);                  			  //get first process's node form pcb queue
-	struct task_struct*next_pcb = (struct task_struct*)elem2PCBentry(struct task_struct,ready_node,thread_tag);
+	struct task_struct*next_pcb = (struct task_struct*)elem2entry(struct task_struct,ready_node,thread_tag);
 	activateProcess(next_pcb);
 	next_pcb -> status = TASK_RUNNING;
 	if (cur_pcb -> status == TASK_DIED) 

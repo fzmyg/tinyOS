@@ -4,6 +4,7 @@
 #include"stdint.h"
 #include"list.h"
 #include"memory.h"
+#define MAX_FILES_OPEN_PER_PROCESS 8
 
 typedef void(*thread_func)(void*);
 typedef uint16_t pid_t;
@@ -66,6 +67,7 @@ typedef struct task_struct{
 	uint32_t pgdir_vaddr; 			//页目录表在内核进程页表中的地址
 	struct vmpool vaddr_pool;		//进程虚拟内存池
 	struct mem_block_desc descs[MEM_DESC_CNT]; //用户内存管理
+	int32_t fd_table[MAX_FILES_OPEN_PER_PROCESS]; //文件描述符数组
 	uint32_t stack_magic;			//魔术 --- 防止内核栈溢出 
 }taskStruct;
 
@@ -95,4 +97,10 @@ extern void thread_unblock(struct task_struct*pcb);
 
 /*挂起线程*/
 extern void thread_yield(void);
+
+/*获取pid*/
+pid_t createPid(void);
+
+/*销毁pid*/
+void remotePid(pid_t pid);
 #endif

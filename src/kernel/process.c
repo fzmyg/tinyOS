@@ -76,7 +76,8 @@ void executeProcess(void* filename,char*process_name)
 	enum int_status stat = closeInt();
 	struct task_struct* proc_pcb = thread_start(process_name,DEFAULT_PROI,&processBooter,filename); //创建线程栈
 	initUserVaddrPool(proc_pcb);
-	proc_pcb->pgdir_vaddr = (uint32_t)createPDT();	
+	proc_pcb->pgdir_vaddr = (uint32_t)createPDT();
+	proc_pcb->pid = createPid();	
 	setIntStatus(stat);
 }
 

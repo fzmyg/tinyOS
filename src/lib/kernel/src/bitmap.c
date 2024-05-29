@@ -28,7 +28,7 @@ bool bitIsUsed(Bitmap*bitmap,uint32_t bit_idx)
  *Description:	check whether bitmap has remaining continues cnt bit
  *Return Value: on successful bit index is returned ,else -1 is returned
  * */
-uint32_t scanBitmap(Bitmap*bitmap,uint32_t cnt)
+int32_t scanBitmap(Bitmap*bitmap,uint32_t cnt)
 {
 	ASSERT(bitmap!=NULL);
 	uint32_t byte_index = 0;
