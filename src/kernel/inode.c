@@ -14,7 +14,7 @@ struct inode_position{
     uint32_t block_offset;  /*块内偏移*/
 };
 
-/*获取inode项在磁盘中详细位置信息 用于在*/
+/*获取inode项在磁盘中详细位置信息*/
 static struct inode_position locate_inode(struct partition*part,uint32_t inode_no)
 {
     struct inode_position inode_pos;

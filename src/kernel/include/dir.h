@@ -16,7 +16,7 @@ struct dir{
 /* 目录的inode指向的数据段*/
 struct dir_entry{
     char name[MAX_FILE_NAME_LEN]; //
-    uint32_t i_index;
+    uint32_t i_no;
     enum file_types  f_type;
 };
 

@@ -51,7 +51,7 @@ int32_t inode_bitmap_alloc(struct partition *part)
     if (bit_index == -1)
         return -1;
     setBitmap(&part->inode_bitmap, bit_index, 1);
-    return bit_index;
+    return bit_index;   //返回inode编号
 }
 /*在block_bitmap中申请block*/
 int32_t block_bitmap_alloc(struct partition*part)
@@ -60,15 +60,15 @@ int32_t block_bitmap_alloc(struct partition*part)
     if (bit_index == -1)
         return -1;
     setBitmap(&part->block_bitmap, bit_index, 1);
-    return part->sb->data_start_lba+bit_index;
+    return part->sb->data_start_lba+bit_index; //返回申请的块的LBA
 }
 /*同步bitmap数据到硬盘*/
-void sync_bitmap(enum bitmap_type bt,struct partition*part,uint32_t bit_index)
+void sync_bitmap(enum bitmap_type bp_type,struct partition*part,uint32_t bit_index)
 {
     uint32_t sector_off = bit_index/(SECTOR_SIZE*8); //得到位图相对在位图起点的硬盘偏移
     uint32_t byte_off  = sector_off*SECTOR_SIZE;    //加上位图起始内存地址就是要写入硬盘的1扇区数据的内存地址
     uint32_t sec_lba; uint8_t * bitmap_off;
-    switch(bt){
+    switch(bp_type){
         case INODE_BITMAP:
             sec_lba = part->sb->inode_bitmap_lba + sector_off; //获取要写入的扇区地址
             bitmap_off = part->inode_bitmap.pbitmap+byte_off; //获取要写入数据的内存地址

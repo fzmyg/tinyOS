@@ -8,6 +8,9 @@
 #include"debug.h"
 #include"string.h"
 #include"stdiok.h"
+
+struct partition* cur_part;
+
 /*创建文件系统*/
 static void format_partition(struct partition*part) 
 {
@@ -90,11 +93,11 @@ static void format_partition(struct partition*part)
  * ******************************/
     struct dir_entry*dir_ety =(struct dir_entry*)buf;
     memcpy(dir_ety->name,".",1);
-    dir_ety->i_index = 0;
+    dir_ety->i_no = 0;
     dir_ety->f_type = FT_DIRECTORY;
     dir_ety++;
     memcpy(dir_ety->name,"..",2);
-    dir_ety->i_index = 0;
+    dir_ety->i_no = 0;
     dir_ety->f_type = FT_DIRECTORY;
 
     writeDisk(buf,part->my_disk,sb.data_start_lba,1);

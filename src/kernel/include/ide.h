@@ -4,6 +4,7 @@
 #include"list.h"
 #include"bitmap.h"
 #include"sync.h"
+#include"super_block.h"
 /*注释中添加 “*” 表示该成员有意义 ， 没有 “*” 则说明该成员没有实际意义 */
 /*分区结构*/
 struct partition{

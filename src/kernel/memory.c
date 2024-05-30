@@ -306,7 +306,7 @@ void * sys_malloc(uint32_t size)
 		//releaseLock(&mem_pool->lock);
 		return (void*)(arena+1);
 	}else{  /*申请数量小于1024B*/
-		uint8_t desc_index; /*描述符索引*/
+		uint8_t desc_index=0; /*描述符索引*/
 		while(size > descs[desc_index].block_size) desc_index++;
 		if(list_empty(&descs[desc_index].free_list)){ /*内存块描述符空闲内存块队列不为空*/
 			arena = mallocPage(pf,1); 				  //申请新4KB内存
