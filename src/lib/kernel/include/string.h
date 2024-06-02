@@ -13,6 +13,7 @@ extern int8_t strcmp(const char*a,const char*b); //ok
 extern int8_t strncmp(const char*a,const char*b,uint32_t size);
 extern uint32_t strchrs(const char*str,const uint8_t ch);
 extern char* strchr(const char*str,const uint8_t ch);
+extern char* strrchr(const char*str,const char ch);
 extern char* strcat(char*dst_,const char*src_);
 extern char* strncat(char*dst_,const char*src_,uint32_t size);
 #endif

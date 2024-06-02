@@ -12,7 +12,7 @@
 #include"stdio.h"
 #include"syscall.h"
 #include"syscall_init.h"
-
+#include"fs.h"
 #define UNUSED __attribute__((unused))
 
 void threadA(void*s);
@@ -23,10 +23,7 @@ int main(void)
 	cls(); 
 	put_str("booting kernel\n");
 	init_all();
-	//thread_start("kernel_thread_a",31,&threadA,"A  ");
-	//thread_start("kernel_thread_b",31,&threadA,"B  ");
-	char*p = (char*)sys_malloc(21);
-	executeProcess(userProcessA,"user process A");
+	sys_open("/home",O_CREATE);
 	while(1){};
 	return 0;
 }

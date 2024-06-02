@@ -1,5 +1,5 @@
 #ifndef __SUPER_BLOCK_H__
-#define __SUPER_BLCOK_H__
+#define __SUPER_BLOCK_H__
 #include"stdint.h"
 
 struct super_block{

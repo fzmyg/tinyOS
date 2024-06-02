@@ -1,6 +1,7 @@
 #include"string.h"
 #include"debug.h"
 #include"print.h"
+#include"stdint.h"
 /*
 extern void memset(void*dest,uint8_t val,uint32_t size);
 extern void* memcpy(void*dst,const void*src,uint32_t size);
@@ -127,6 +128,14 @@ char* strchr(const char*str,const uint8_t ch)
 	return (char*)str;
 }
 
+char* strrchr(const char*str,const char ch)
+{
+	char* p = (char*)str+strlen(str)-1;
+	while(*p!=ch){
+		p--;
+	}
+	return p;
+}
 
 char * strcat(char*dst_,const char*src_)
 {
