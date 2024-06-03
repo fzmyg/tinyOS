@@ -112,6 +112,6 @@ void close_inode(struct inode* inode)
 /*初始化inode*/
 void init_inode(struct inode*inode,uint32_t i_no)
 {
-    memset(&inode,0,sizeof(struct inode));
+    memset(inode,0,sizeof(struct inode));
     inode->i_no = i_no;
 }

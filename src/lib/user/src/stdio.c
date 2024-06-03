@@ -4,29 +4,27 @@
 #include"syscall.h"
 
 
-
+//len = 9 
 /*将整型val按base进制转换为相应字符串放入buf中*/
 static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
 {   if(val==0){
         buf[0]='0';
         return 1;
     }
-    int index = 0;
+    uint32_t i = 0;
     while(val){
         uint32_t num = val%base;
         if(num >= 10)
-            buf[index++]=num-10+'a';
+            buf[i++]=num-10+'a';
         else
-            buf[index++]=num + '0';
+            buf[i++]=num + '0';
         val/=base;    
     }
-    int len = index;
-    while (index>len/2)
-    {
-        char tmp = buf[index];
-        buf[index]=buf[len-1-index];
-        buf[len-1-index]=tmp;
-        index--;
+    uint32_t len = (uint32_t)i;
+    for(i=0;i<len/2;++i){
+        char tmp = buf[len-1-i];
+        buf[len-1-i]=buf[i];
+        buf[i]=tmp;
     }
     return len;
 }

@@ -57,16 +57,16 @@ bool search_dir_entry(struct partition*part,struct dir*pdir,const char*name,stru
         readDisk(all_blocks+12,part->my_disk,pdir->inode->i_sectors[12],1);
     }
     char*buf = (char*)sys_malloc(SECTOR_SIZE);
-    struct dir_entry* d_entery = (struct dir_entry*)buf;
-    uint32_t max_dir_entery_size = SECTOR_SIZE / part->sb->dir_entry_size;
+    struct dir_entry* d_entry = (struct dir_entry*)buf;
+    uint32_t max_dir_entery_cnt = SECTOR_SIZE / part->sb->dir_entry_size;
     for(i=0;i<block_cnt;i++){
         if(all_blocks[i]==0) continue;
         readDisk(buf,part->my_disk,all_blocks[i],1);
         uint32_t j = 0;
         
-        for(;j<max_dir_entery_size;j++){
-            if(strcmp(d_entery[j].name,name)==0){
-                memcpy(dir_e,d_entery,sizeof(struct dir_entry));
+        for(;j<max_dir_entery_cnt;j++){
+            if(strcmp(d_entry[j].name,name)==0){
+                memcpy(dir_e,d_entry+j,sizeof(struct dir_entry));
                 sys_free(all_blocks); sys_free(buf);
                 return true;
             }
@@ -112,12 +112,12 @@ bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry)
             if(block_addr_index<12){ //直接块未分配
                 dir_inode->i_sectors[block_addr_index]=all_blocks_addr[block_addr_index]=block_lba;   //直接分配数据块地址
             }else if(block_addr_index==12){//第一个间接块未分配
-                dir_inode->i_sectors[block_addr_index]=block_lba;    //分配间接块地址
-                int32_t data_block_lba = alloc_block_bitmap(cur_part);
+                dir_inode->i_sectors[block_addr_index]=block_lba;      //分配间接块地址
+                int32_t data_block_lba = alloc_block_bitmap(cur_part); //申请一级间接块
                 if(data_block_lba==-1){
                     printk("alloc block bitmap for sync_dir_entry faild\n");
-                    setBitmap(&cur_part->block_bitmap,block_lba-cur_part->sb->data_start_lba,0);
-                    sync_bitmap(BLOCK_BITMAP,cur_part,block_lba-cur_part->sb->data_start_lba);
+                    setBitmap(&cur_part->block_bitmap,block_lba-cur_part->sb->data_start_lba,0); //还原block_bitmap
+                    sync_bitmap(BLOCK_BITMAP,cur_part,block_lba-cur_part->sb->data_start_lba);   //同步磁盘
                     dir_inode->i_sectors[12]=0;
                     sys_free(buf);
                     sys_free(all_blocks_addr);

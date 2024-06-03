@@ -362,7 +362,7 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
 
     int inode_no = searchFile((char*)path_name,&searched_record);
     uint32_t searched_depth = path_depth_cnt(searched_record.searched_path);
-    if(path_depth != searched_depth){
+    if(path_depth != searched_depth){ //查找到的和打开的深度不同
         printk("no such file or directory\n");
         close_dir(searched_record.parent_dir);
         return -1;
@@ -373,19 +373,23 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
         close_dir(searched_record.parent_dir);
         return -1;
     }
-    if(found_tag == false && (o_mode & O_CREATE)==0){
+    if(found_tag == false && (o_mode & O_CREATE)==0){ //未找到也不创建
         printk("in path %s,file %s is not exist\n",searched_record.searched_path,strrchr(path_name,'/')+1);
         close_dir(searched_record.parent_dir);
         return -1;
-    }else if(found_tag == true && (o_mode&O_CREATE)!=0){
+    }else if(found_tag == true && (o_mode&O_CREATE)!=0){//找到了要创建
         printk("file:%S has already exist!\n",path_name);
         close_dir(searched_record.parent_dir);
         return -1;
     }
     switch (o_mode & O_CREATE){
         case O_CREATE:
-            fd = createFile(searched_record.parent_dir,strrchr(path_name,'/'),o_mode);
+            fd = createFile(searched_record.parent_dir,strrchr(path_name,'/')+1,o_mode);
             close_dir(searched_record.parent_dir);
+            break;
+            //以下为打开已存在文件
+        default:
+            break;
     }
     return fd;
 }

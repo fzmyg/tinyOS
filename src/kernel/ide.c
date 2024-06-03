@@ -232,49 +232,6 @@ static void identify_disk(struct disk*hd)
     printk("  CAPACITY :%dMB\n",sectors*512/1024/1024);/*输出硬盘容量*/
 }
 
-/*扫描分区表*/
-/*  int32_t ext_lba_base = 0;           //用于记录总扩展分区的起始lba，初始为0，partition_scan时以此为标记
-    uint8_t primary_index = 0,logic_index = 0; //用来记录硬盘主分区和逻辑分区的下标*/
-static void scanPartition(struct disk*hd,uint32_t ext_lba)
-{
-    uint32_t logic_index = 0,primary_index =0;
-    struct boot_sector * bs = sys_malloc(sizeof(struct boot_sector));   //申请512byte内存
-    ASSERT(bs!=NULL);
-    readDisk(bs,hd,ext_lba,1); //从硬盘起始扇区读取MBR或EBR
-    uint8_t part_index = 0;    //用于遍历分区表
-    struct partition_table_entry * ppte = bs->partition_table; //获取分区表
-    while(part_index++<4){ //遍历分区表
-        if(ppte->fs_type == 0x5) {//若为拓展分区
-            if(ext_lba_base!=0){ // 
-                scanPartition(hd,ext_lba_base+ppte->start_lba);
-            }else{
-                ext_lba_base = ppte->start_lba;
-                scanPartition(hd,ppte->start_lba);
-            }
-        }else if(ppte->fs_type != 0)/*为有效的分区类型*/{
-            if(ext_lba == 0){
-                hd->prim_parts[primary_index].start_lba = ext_lba_base + ppte->start_lba;
-                hd->prim_parts[primary_index].sector_cnt = ppte->sec_cnt;
-                hd->prim_parts[primary_index].my_disk = hd;
-                list_append(&partition_list,&(hd->prim_parts[primary_index].part_node));
-                sprintf(hd->prim_parts[primary_index].name,"%s%d",hd->name,primary_index+1);
-                ASSERT(primary_index<4);
-                primary_index++;
-            }else{
-                hd->logic_parts[logic_index].start_lba = ext_lba + ppte->start_lba;
-                hd->logic_parts[logic_index].my_disk=hd;
-                hd->logic_parts[logic_index].sector_cnt = ppte->sec_cnt;
-                list_append(&partition_list,&(hd->logic_parts[logic_index].part_node));
-                sprintf(hd->logic_parts[logic_index].name,"%s%d",hd->name,logic_index+5);
-                logic_index ++ ;
-                if(logic_index>=8)
-                    break;
-            }
-        }
-        ppte++;
-    } 
-    sys_free(bs);
-}
 /*调整MBR分区表，使最后一项为拓展分区项*/
 static void adjustPartitionTable(char* buf)
 {
