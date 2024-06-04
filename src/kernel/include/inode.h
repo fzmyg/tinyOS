@@ -16,7 +16,7 @@ struct inode{
     uint32_t hard_link_cnt; 	    //硬链接数
     enum privilege mode;	    	//权限
 
-    bool write_denyl;               //防止进程同时写入
+    bool write_deny;                //防止进程同时写入
     struct list_elem i_node;        //查找inode的提速缓冲区
 };
 

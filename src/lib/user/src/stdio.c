@@ -90,7 +90,7 @@ uint32_t printf(const char* format,...)
     va_start(arg,format);
     char buf[1024]={0}; 
     uint32_t len = vsprintf(buf,format,arg);
-    len = write(buf);
+    len = print(buf);
     return len;
 }
 

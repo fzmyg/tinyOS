@@ -38,7 +38,7 @@ void sync_inode(const struct inode*inode,struct partition*part)
     memcpy(&pure_inode,inode,sizeof(struct inode)); //复制inode信息
     pure_inode.i_open_cnts = 0;
     pure_inode.i_node.prev = NULL;  pure_inode.i_node.next = NULL;
-    pure_inode.write_denyl=0;
+    pure_inode.write_deny=0;
     pure_inode.hard_link_cnt = 0;
     char * buf;
     if(inode_pos.two_sector){

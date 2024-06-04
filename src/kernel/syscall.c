@@ -20,9 +20,9 @@ pid_t getpid(void)
     return (pid_t)_SYSCALL0(GET_PID);
 }
 
-uint32_t write(const char*str)
+uint32_t print(const char*str)
 {
-    return (uint32_t)_SYSCALL1(WRITE,str);
+    return (uint32_t)_SYSCALL1(PRINT,str);
 }
 
 void* malloc(uint32_t size)
@@ -33,4 +33,19 @@ void* malloc(uint32_t size)
 void free(void*ptr)
 {
     _SYSCALL1(FREE,ptr);   
+}
+
+int open(const char* path,uint32_t o_mode)
+{
+    return _SYSCALL2(OPEN,path,o_mode);
+}
+
+void close(int fd)
+{
+    _SYSCALL1(CLOSE,fd);
+}
+
+int write(int fd,const char* buf,uint32_t count)
+{
+    return _SYSCALL3(WRITE,fd,buf,count);
 }

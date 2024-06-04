@@ -14,6 +14,7 @@
 #include"syscall_init.h"
 #include"fs.h"
 #include"file.h"
+#include"stdiok.h"
 #define UNUSED __attribute__((unused))
 
 void threadA(void*s);
@@ -24,7 +25,8 @@ int main(void)
 	cls(); 
 	put_str("booting kernel\n");
 	init_all();
-	int fd = sys_open("/home",0);
+	int fd = sys_open("/home",O_RDONLY);
+	sys_close(fd);
 	printk("open file`s fd is %d\n",fd);
 	while(1){};
 	return 0;

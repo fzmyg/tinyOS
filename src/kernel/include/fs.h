@@ -28,13 +28,15 @@ struct searched_path_record{
 /*为所有从盘创建文件系统*/
 extern void initFileSystem(void);
 
-extern uint32_t path_depth_cnt(const char*pathname);
-
 extern uint32_t convertPath(char*path);
 
 extern uint32_t getPathDepth(char* path);
 
 extern int32_t sys_open(const char* path_name,uint32_t o_mode);
+
+extern int32_t sys_close(int fd);
+
+extern int32_t sys_write(int fd,const char*buf,uint32_t count);
 
 extern struct partition* cur_part;
 

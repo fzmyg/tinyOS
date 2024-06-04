@@ -8,11 +8,12 @@
 #include"debug.h"
 #include"string.h"
 #include"stdiok.h"
-
+#include"interrupt.h"
+#include"console.h"
 struct partition* cur_part;
 
 /*创建文件系统*/
-static void format_partition(struct partition*part) 
+static void mkfs2disk(struct partition*part) 
 {
 /* ******************************
  * 1.计算元信息
@@ -129,7 +130,7 @@ static void mountPartion(struct partition*part)
 }
 
 
-/*扫描通道上设备的分区，在分区中创建文件系统*/
+/*为空白分区创建文件系统，挂载sdb1分区的文件系统*/
 void initFileSystem()
 {
     printk("init file system start\n");
@@ -158,12 +159,12 @@ void initFileSystem()
                     continue;
                 readDisk(sb,&channels[i].disks[dev_index],part[index].start_lba + 1,1); //读取硬盘超级块
                 if(sb->magic_number != 0x20040104) //文件系统不存在
-                    format_partition(part);
+                    mkfs2disk(part);
                 
-                if(strcmp(part[index].name,"sdb1")==0){
-                    mountPartion(&part[index]);
+                if(strcmp(part[index].name,"sdb1")==0){ //选择sdb1分区挂载
+                    mountPartion(&part[index]); //挂载文件系统到内核
                     cur_part = &part[part_index];
-                    open_root_dir(cur_part);
+                    open_root_dir(cur_part); //打开根目录
                 }
             }
         }
@@ -187,7 +188,7 @@ static char* path_parse(const char* pathname,char* name_store_buf)
     return p;    
 }
 
-uint32_t path_depth_cnt(const char*pathname)
+/*uint32_t getPathDepth(const char*pathname)
 {
     if(pathname==NULL) 
         return 0;
@@ -202,7 +203,8 @@ uint32_t path_depth_cnt(const char*pathname)
             p=path_parse(p,name);
     }
     return depth;
-}
+}*/
+
 /*将路径转换为标准路径*/
 uint32_t convertPath(char*path)
 {
@@ -239,58 +241,6 @@ uint32_t getPathDepth(char* path)
             depth++;
     }
     return depth;
-}
-
-/*靠path_name从根目录起始查找文件，成功返回inode号，失败在p_record中记录错误信息*/
-static int search_file(char* path_name,struct searched_path_record* p_record)
-{
-    if(strcmp(path_name,"/")==0 || strcmp(path_name,"/.")==0 || strcmp(path_name,"/..")==0){ //若查找的是根目录，初始化搜索记录并返回
-        p_record->parent_dir = &root_dir;
-        p_record->searched_path[0]='\0';
-        p_record->f_type = FT_DIRECTORY;
-        return 0;
-    }
-    uint32_t path_len = convertPath(path_name); //将地址转换为标准地址
-    if(path_name[0]!='/' || path_len>MAX_PATH_LEN) return -1; //地址格式不正确
-
-    char*sub_path = path_name;          //子路径
-    struct dir* parent_dir = & root_dir;
-    struct dir_entry dir_entry; //搜索条目记录区
-    char name[MAX_FILE_NAME_LEN]={0};//搜索name
-
-    p_record->parent_dir = parent_dir;//初始化 当前搜索目录的父目录
-    p_record->f_type = FT_UNKNOW;     //初始化 当前文件类型
-    uint32_t parent_inode_no = 0 ;    //初始化已查找的目录i_no
-    sub_path=path_parse(path_name,name);//从路径提取待查找项
-
-    while(name[0]){ //若有待查找项
-        if(strlen(p_record->searched_path)>MAX_PATH_LEN) return -1; //若搜索路径长度超出定义范围 直接返回，搜索失败
-        strcat(p_record->searched_path,"/");
-        strcat(p_record->searched_path,name);           //拼接当前待查找项
-        if(search_dir_entry(cur_part,parent_dir,name,&dir_entry)){ //若查找出相应的目录项
-
-            if(dir_entry.f_type==FT_DIRECTORY){         //目录项所指文件为目录文件
-                parent_inode_no = parent_dir->inode->i_no;
-                close_dir(parent_dir);
-                parent_dir = open_dir(cur_part,dir_entry.i_no);
-                p_record->parent_dir = parent_dir;
-                memset(name,0,MAX_FILE_NAME_LEN);
-                if(sub_path){
-                    sub_path = path_parse(sub_path,name); //下一个循环查找的文件名
-                }
-                continue;
-            }else if(dir_entry.f_type == FT_REGULAR){   //目录项所指文件为普通文件
-                p_record->f_type = FT_REGULAR;
-                return dir_entry.i_no;
-            }
-        } else{
-            return -1;
-        }
-    }
-    close_dir(p_record->parent_dir);
-    p_record->parent_dir = open_dir(cur_part,parent_inode_no);
-    p_record->f_type = FT_DIRECTORY;
-    return dir_entry.i_no;
 }
 
 /*传入待搜索的路径和一个输出参数搜索路径记录块，搜索路径记录块中记录搜索过的路径，父目录inode，搜索的文件类型*/
@@ -358,10 +308,10 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
     int32_t fd = -1;
     struct searched_path_record searched_record;
     memset(&searched_record,0,sizeof(struct searched_path_record));
-    uint32_t path_depth = path_depth_cnt((char*)path_name);
+    uint32_t path_depth = getPathDepth((char*)path_name);
 
     int inode_no = searchFile((char*)path_name,&searched_record);
-    uint32_t searched_depth = path_depth_cnt(searched_record.searched_path);
+    uint32_t searched_depth = getPathDepth(searched_record.searched_path);
     if(path_depth != searched_depth){ //查找到的和打开的深度不同
         printk("no such file or directory\n");
         close_dir(searched_record.parent_dir);
@@ -389,7 +339,45 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
             break;
             //以下为打开已存在文件
         default:
+            fd = open_file(inode_no,o_mode);
+            close_dir(searched_record.parent_dir);
             break;
     }
     return fd;
+}
+
+
+static int32_t convert_fd2ft_idx(int fd)
+{
+    int32_t ft_idx = -1;
+    if(fd>2){
+        struct task_struct * pcb = getpcb();
+        ft_idx = pcb->fd_table[fd];
+    }
+    return ft_idx;
+}
+
+int sys_close(int fd)
+{
+    int ft_idx = convert_fd2ft_idx(fd);
+    if(ft_idx==-1) return -1;
+    close_file(&file_table[ft_idx]);
+    getpcb()->fd_table[fd]=-1;
+    return 0;
+}
+
+int32_t sys_write(int32_t fd,const char* buf ,uint32_t count)
+{
+    if(fd<0) return -1;
+    if(fd == stdout_no || fd == stderr_no){
+        console_put_str(buf);
+        return (int32_t)count;
+    }
+    int32_t write_byte_cnt = -1;
+    struct file*file = &file_table[convert_fd2ft_idx(fd)];
+    if(file->fd_flag == O_WRONLY || file->fd_flag == O_RDWR)
+        write_byte_cnt=writeFile(file,buf,count);
+    else
+        console_put_str("you have no privilige to write this file\n");
+    return write_byte_cnt;
 }

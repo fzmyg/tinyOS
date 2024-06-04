@@ -38,4 +38,11 @@ extern void sync_bitmap(enum bitmap_type bt,struct partition*part,uint32_t bit_i
 /*创建文件*/
 extern int createFile(struct dir* parent_dir,char*file_name,uint32_t flags);
 
+extern int32_t open_file(uint32_t i_no,uint32_t o_mode);
+
+extern int32_t close_file(struct file*file); 
+
+extern int32_t allocDataBlock(struct partition*part,struct inode*inode);
+
+extern int32_t writeFile(struct file* file,const char*buf,uint32_t count);
 #endif

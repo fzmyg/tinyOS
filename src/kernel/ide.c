@@ -350,7 +350,7 @@ void initIDE()
             sprintf(disk->name,"sd%c",'a'+dev_no);
             identify_disk(disk);
             if(dev_no!=0){ //若为从盘则扫描盘上分区表
-                initPartitions(disk);
+                initPartitions(disk); //挂载磁盘中的分区
             }
         }
     }
