@@ -99,7 +99,7 @@ static void initThreadBase(struct task_struct* thread,const char*name,int prio)
 	for(;i<MAX_FILES_OPEN_PER_PROCESS;i++){
 		thread->fd_table[i]=-1;
 	}
-
+	thread->cwd_inode_no = 0;
 	thread->stack_magic = 0x20040104;
 }
 /*init task_struct stack data*/

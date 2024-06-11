@@ -45,4 +45,6 @@ extern int32_t close_file(struct file*file);
 extern int32_t allocDataBlock(struct partition*part,struct inode*inode);
 
 extern int32_t writeFile(struct file* file,const char*buf,uint32_t count);
+
+extern int32_t readFile(struct file* file,char*buf,uint32_t count);
 #endif

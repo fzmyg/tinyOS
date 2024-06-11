@@ -61,7 +61,7 @@ compile_oskernel:
 	@echo "######################################################################################################################################################################################################################"
 	
 install_kernel: compile_oskernel os_kernel
-	dd if=./src/bin/os_kernel of=./hd60M.img bs=512 count=200 seek=10 conv=notrunc
+	dd if=./src/bin/os_kernel of=./hd60M.img bs=512 count=400 seek=10 conv=notrunc
 os_kernel:${C_OBJECT} ${S_OBJECT}
 	${LD} src/kernel/bin/main.o src/kernel/bin/init.o src/kernel/bin/interrupt.o src/kernel/bin/kernel.o src/kernel/bin/timer.o src/kernel/bin/memory.o ./src/kernel/bin/thread.o ./src/kernel/bin/switch.o ./src/kernel/bin/sync.o ./src/kernel/bin/console.o ./src/kernel/bin/keyboard.o ./src/kernel/bin/ioqueue.o ./src/kernel/bin/tss.o ./src/kernel/bin/process.o ./src/kernel/bin/syscall_init.o ./src/kernel/bin/syscall.o ./src/kernel/bin/ide.o  ./src/kernel/bin/fs.o ./src/kernel/bin/inode.o ./src/kernel/bin/file.o ./src/kernel/bin/dir.o ./src/lib/user/bin/stdio.o ./src/lib/kernel/bin/stdiok.o ./src/lib/kernel/bin/print.o ./src/lib/kernel/bin/debug.o ./src/lib/kernel/bin/string.o -o ./src/bin/os_kernel ./src/lib/kernel/bin/bitmap.o ./src/lib/kernel/bin/list.o ${LDFLAGES}
 ./src/kernel/bin/%.o:./src/kernel/%.c
@@ -101,3 +101,8 @@ all: install_mbr install_loader lib install_kernel
 .PHONY: clean
 clean:	
 	rm -rf ./src/bin/* ./src/bin/*.o ./src/kernel/bin/*.o ${LIB_KERNEL_DIR}/bin/*.o ${LIB_USER_DIR}/bin/*.o
+
+.PHONY:
+restall_disk:
+	rm hd80M.img
+	cp hd80M.bk hd80M.img

@@ -12,7 +12,7 @@ struct inode{
     uint32_t i_open_cnts;           //文件被打开次数
     uint32_t i_sectors[13];         //12个扇区数据，1个扇区为1级间接块指针
 
-    enum file_types file_type;	    //文件类型
+    enum file_type file_type;	    //文件类型
     uint32_t hard_link_cnt; 	    //硬链接数
     enum privilege mode;	    	//权限
 
@@ -22,12 +22,14 @@ struct inode{
 
 
 /*同步inode*/
-extern void sync_inode(const struct inode*inode,struct partition*part);
+extern bool sync_inode(const struct inode*inode,struct partition*part);
 
 extern struct inode* open_inode(struct partition* part,uint32_t i_no);
 
 extern void close_inode(struct inode* inode);
 
-extern void init_inode(struct inode*inode,uint32_t i_no);
+extern void init_inode(struct inode*inode,uint32_t i_no,enum file_type file_type);
 
+//删除inode表 删除数据块位图 删除inode位图
+extern bool remove_inode(uint32_t inode_no,struct partition*part);
 #endif

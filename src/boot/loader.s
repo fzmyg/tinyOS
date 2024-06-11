@@ -175,7 +175,7 @@ setup_page:
 		ret	
 
 read_kernel:
-	mov eax,200
+	mov eax,KERNEL_SECTOR_CNT
 	mov dx,0x1f2
 	out dx,al
 	
@@ -200,20 +200,20 @@ read_kernel:
 	mov al,0x20
 	out dx,al
 	
-	wait_for_disk:
+	.wait_for_disk:
 		nop
 		in al,dx
 		and al,0x88
 		cmp al,0x80
-		je wait_for_disk
-	mov ecx,51200
+		je .wait_for_disk
+	mov ecx,102400
 	mov edi,KERNEL_ELF_BASE_ADDR
 	mov dx,0x1f0
-	set2mem:
+	.set2mem:
 		in ax,dx
 		mov [ds:edi],ax
 		add edi,2
-		loop set2mem
+		loop .set2mem
 	ret
 ;void mem_cpy(dest ,src ,size)
 mem_cpy:
@@ -267,6 +267,8 @@ init_kernel:
 GDT_SIZE equ $-GDT_START
 
 GDT_LIMITS equ GDT_SIZE-1
+
+KERNEL_SECTOR_CNT equ 400
 
 gdt_ptr: dw GDT_LIMITS	
 	 dd GDT_START

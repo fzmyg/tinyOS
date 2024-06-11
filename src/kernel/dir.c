@@ -11,7 +11,7 @@ struct dir root_dir;
 void open_root_dir(struct partition*part)
 {
     root_dir.inode = open_inode(part,0);
-    root_dir.dir_pos=0;
+    root_dir.read_entry_cnt=0;
     memset(root_dir.dir_buf,0,512);
 }
 /*打开inode_no号目录*/
@@ -22,7 +22,7 @@ struct dir* open_dir(struct partition*part,uint32_t inode_no)
        return NULL;
     }
     dir->inode = open_inode(part,inode_no);
-    dir->dir_pos=0;
+    dir->read_entry_cnt=0;
     memset(dir->dir_buf,0,512);
     return dir;
 }
@@ -34,7 +34,7 @@ void close_dir(struct dir*dir)
     sys_free(dir);
 }
 /*在内存中设置 目录条目*/
-void init_dir_entry(struct dir_entry*p_de,char*filename,uint32_t inode_no,enum file_types ft)
+void init_dir_entry(struct dir_entry*p_de,char*filename,uint32_t inode_no,enum file_type ft)
 {
     memset(p_de,0,sizeof(struct dir_entry));
     uint32_t name_len = strlen(filename);
@@ -45,7 +45,7 @@ void init_dir_entry(struct dir_entry*p_de,char*filename,uint32_t inode_no,enum f
 }
 
 /*用名查询目录条目 ,搜寻到的目录条目存储在dir_e中，由调用者提供*/
-bool search_dir_entry(struct partition*part,struct dir*pdir,const char*name,struct dir_entry*dir_e)
+bool search_dir_entry_by_name(struct partition*part,struct dir*pdir,const char*name,struct dir_entry*dir_e)
 {
     uint32_t block_cnt = 140;
     uint32_t* all_blocks = (uint32_t*)sys_malloc(sizeof(uint32_t)*block_cnt);
@@ -77,7 +77,40 @@ bool search_dir_entry(struct partition*part,struct dir*pdir,const char*name,stru
     return false;
 }
 
-//将dir_entry同步到磁盘         
+/*用inode_no查询目录条目 ,搜寻到的目录条目存储在dir_e中，由调用者提供*/
+bool search_dir_entry_by_inode_no(struct partition*part,struct dir*pdir,int inode_no,struct dir_entry*dir_e)
+{
+    uint32_t block_cnt = 140;
+    uint32_t* all_blocks = (uint32_t*)sys_malloc(sizeof(uint32_t)*block_cnt);
+    uint32_t i=0;
+    for(;i<12;i++){
+        all_blocks[i] = pdir->inode->i_sectors[i];
+    }
+    if(pdir->inode->i_sectors[12]!=0){
+        readDisk(all_blocks+12,part->my_disk,pdir->inode->i_sectors[12],1);
+    }
+    char*buf = (char*)sys_malloc(SECTOR_SIZE);
+    struct dir_entry* d_entry = (struct dir_entry*)buf;
+    uint32_t max_dir_entery_cnt = SECTOR_SIZE / part->sb->dir_entry_size;
+    for(i=0;i<block_cnt;i++){
+        if(all_blocks[i]==0) continue;
+        readDisk(buf,part->my_disk,all_blocks[i],1);
+        uint32_t j = 0;
+        
+        for(;j<max_dir_entery_cnt;j++){
+            if(d_entry[j].i_no==(uint32_t)inode_no){
+                memcpy(dir_e,d_entry+j,sizeof(struct dir_entry));
+                sys_free(all_blocks); sys_free(buf);
+                return true;
+            }
+        }
+        memset(buf,0,SECTOR_SIZE);
+    }
+    sys_free(buf); sys_free(all_blocks);
+    return false;
+}
+
+//将dir_entry同步到磁盘  创建文件或目录时使用        
 bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry)
 {
     struct inode* dir_inode = parent_dir->inode;        //inode获取数据块
@@ -160,4 +193,143 @@ bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry)
     sys_free(buf);
     sys_free(all_blocks_addr);
     return false;
+}
+//删除dir条目
+bool remove_dir_entry(struct dir*parent_dir,uint32_t inode_no,struct partition*part)
+{
+    struct inode* inode = parent_dir->inode;
+    uint32_t roll_no = 0;
+    char* io_buf = (char*)sys_malloc(SECTOR_SIZE);
+    if(io_buf==NULL){
+        goto rollback;
+    }    
+    uint32_t * addr_buf = (uint32_t*)sys_malloc(sizeof(uint32_t)*140);
+    if(addr_buf==NULL){
+        roll_no = 1;
+        goto rollback;
+    }
+    memcpy(addr_buf,inode->i_sectors,12*sizeof(uint32_t));
+    if(inode->i_sectors[12]!=0) 
+        readDisk(addr_buf+12,part->my_disk,inode->i_sectors[12],1);
+
+    uint32_t addr_index = 0;
+    uint32_t dir_entry_cnt_per_sector = SECTOR_SIZE/part->sb->dir_entry_size;
+    for(;addr_index<140;addr_index++){
+        if(addr_buf[addr_index]){
+            readDisk(io_buf,part->my_disk,addr_buf[addr_index],1);
+            uint32_t i =0;
+            uint32_t empty_cnt = 0;
+            bool found_tag = false;
+                for(i=0;i<dir_entry_cnt_per_sector;i++){
+                    struct dir_entry*dir_e = ((struct dir_entry*)io_buf )+ i;
+                    if(dir_e->i_no==inode_no){
+                        found_tag = true;
+                        memset(io_buf+i*part->sb->dir_entry_size,0,part->sb->dir_entry_size);
+                        writeDisk(io_buf,part->my_disk,addr_buf[addr_index],1);
+                    }
+                    if(dir_e->f_type == FT_UNKNOW){
+                        empty_cnt ++ ;
+                    }
+                }
+                if(found_tag && empty_cnt == dir_entry_cnt_per_sector - 1){
+                    setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
+                    sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
+                    //回收数据块
+                    if(addr_index<12){
+                        inode->i_sectors[addr_index]=0;
+                        sync_inode(inode,part);
+                    }else if(addr_index==12){
+                        setBitmap(&part->block_bitmap,inode->i_sectors[12]-part->sb->data_start_lba,0);
+                        sync_bitmap(BLOCK_BITMAP,part,inode->i_sectors[12]-part->sb->data_start_lba);
+                        inode->i_sectors[addr_index]=0;
+                        sync_inode(inode,part);
+                    }else{
+                        setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
+                        sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
+                        addr_buf[addr_index]=0;
+                        writeDisk(addr_buf,part->my_disk,inode->i_sectors[12],1);
+                    }
+            }
+            if(found_tag)
+                break;
+        }
+
+    }
+    sys_free(addr_buf);
+    sys_free(io_buf);
+    return true;
+    rollback:
+    switch (roll_no){
+        case 2:
+            sys_free(addr_buf);
+        case 1:
+            sys_free(io_buf);
+        case 0:
+            return false;
+            break;
+    }
+    return false;
+}
+
+struct dir_entry* read_dir_entry(struct dir* parent_dir,struct partition*part)
+{
+    uint32_t* addr_buf = sys_malloc(sizeof(uint32_t)*140);
+    if(addr_buf == NULL){
+        return NULL;
+    }
+    memcpy(addr_buf,parent_dir->inode->i_sectors,12*sizeof(uint32_t));
+    if(parent_dir->inode->i_sectors[12]){
+        readDisk(addr_buf+12,part->my_disk,parent_dir->inode->i_sectors[12],1);
+    }
+    int entry_cnt_per_sector = SECTOR_SIZE / part->sb->dir_entry_size;
+    int blocks_index = 0; uint32_t read_cnt =0;
+    char* io_buf = sys_malloc(SECTOR_SIZE);
+    if(io_buf==NULL){
+        sys_free(addr_buf);
+        return NULL;
+    }
+    struct dir_entry* dir_e = NULL;
+    for(;blocks_index<140;blocks_index++){
+        if(addr_buf[blocks_index]==0)
+            continue;
+        readDisk(io_buf,part->my_disk,addr_buf[blocks_index],1);
+        struct dir_entry* d_e = (struct dir_entry*)io_buf;
+        int i = 0;
+        for(;i<entry_cnt_per_sector;i++){
+            if(d_e[i].f_type!=FT_UNKNOW){
+                if(read_cnt == parent_dir->read_entry_cnt){
+                    dir_e = sys_malloc(sizeof(struct dir_entry));  
+                    if(dir_e==NULL){
+                        sys_free(addr_buf);sys_free(io_buf);
+                        return NULL;
+                    }
+                    memcpy(dir_e,d_e+i,sizeof(struct dir_entry));
+                    parent_dir->read_entry_cnt ++;
+                    sys_free(addr_buf);sys_free(io_buf);
+                    return dir_e;
+                }
+                read_cnt++;
+            }
+        }
+    }
+    sys_free(addr_buf);sys_free(io_buf);
+    return NULL;
+}
+
+
+bool remove_empty_dir(struct dir*parent_dir,struct dir*dir,struct partition*part)
+{
+
+    struct dir_entry dir_entry;
+    search_dir_entry_by_inode_no(part,parent_dir,dir->inode->i_no,&dir_entry);
+    if(remove_dir_entry(parent_dir,dir->inode->i_no,part)==false){
+        return false;
+    }
+
+    if(remove_inode(dir->inode->i_no,part)==false){
+        sync_dir_entry(parent_dir,&dir_entry);
+        return false;
+    }
+
+    return true;
 }

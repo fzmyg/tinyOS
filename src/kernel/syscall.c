@@ -49,3 +49,65 @@ int write(int fd,const char* buf,uint32_t count)
 {
     return _SYSCALL3(WRITE,fd,buf,count);
 }
+
+int read(int fd,char*buf,uint32_t count)
+{
+    return _SYSCALL3(READ,fd,buf,count);
+}
+
+int lseek(int fd,int off,uint32_t whence)
+{
+    return _SYSCALL3(LSEEK,fd,off,whence);
+}
+
+/*删除文件*/
+bool unlink(const char* file_name)
+{
+    return _SYSCALL1(UNLINK,file_name);
+}
+/*创建目录*/
+int mkdir(const char* path)
+{
+    return _SYSCALL1(MKDIR,path);
+}
+/*删除目录*/
+bool rmdir(const char* path)
+{
+    return _SYSCALL1(RMDIR,path);    
+}
+
+/*打开目录*/
+struct dir* opendir(const char* path)
+{
+    return (struct dir*)_SYSCALL1(OPENDIR,path);
+}
+/*关闭目录*/
+void closedir(struct dir* dir)
+{
+    _SYSCALL1(CLOSEDIR,dir);
+}
+/*读取目录项*/
+struct dir_entry* readdir(struct dir* dir)
+{
+    return (struct dir_entry*)_SYSCALL1(READDIR,dir);
+}
+/*设置目录指针*/
+void rewinddir(struct dir*dir)
+{
+    _SYSCALL1(REWINDDIR,dir);
+}
+/*获取当前工作目录*/
+int getcwd(char*buf,unsigned int size)
+{
+    return _SYSCALL2(GETCWD,buf,size);
+}
+/*更改工作目录*/
+int chdir(const char* path)
+{
+    return _SYSCALL1(CHDIR,path);
+}
+
+int stat(const char*file_path,struct file_stat* stat)
+{
+    return _SYSCALL2(STAT,file_path,stat);
+}

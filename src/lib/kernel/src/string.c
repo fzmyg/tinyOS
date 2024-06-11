@@ -131,9 +131,10 @@ char* strchr(const char*str,const uint8_t ch)
 char* strrchr(const char*str,const char ch)
 {
 	char* p = (char*)str+strlen(str)-1;
-	while(*p!=ch){
+	while((uint32_t)p>=(uint32_t)str&&*p!=ch){
 		p--;
 	}
+	if(p<str) return NULL;
 	return p;
 }
 

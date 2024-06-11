@@ -68,6 +68,7 @@ typedef struct task_struct{
 	struct vmpool vaddr_pool;		//进程虚拟内存池
 	struct mem_block_desc descs[MEM_DESC_CNT]; //用户内存管理
 	int32_t fd_table[MAX_FILES_OPEN_PER_PROCESS]; //文件描述符数组
+	uint32_t cwd_inode_no;
 	uint32_t stack_magic;			//魔术 --- 防止内核栈溢出 
 }taskStruct;
 
@@ -103,4 +104,5 @@ pid_t createPid(void);
 
 /*销毁pid*/
 void remotePid(pid_t pid);
+
 #endif

@@ -25,9 +25,15 @@ int main(void)
 	cls(); 
 	put_str("booting kernel\n");
 	init_all();
-	int fd = sys_open("/home",O_RDONLY);
-	sys_close(fd);
-	printk("open file`s fd is %d\n",fd);
+	char buf[12]={0};
+	if(sys_getcwd(buf,12)==-1){
+		printk("error");
+	}
+	sys_mkdir("/home");
+	struct file_stat stat;
+	sys_stat("/home",&stat);
+	printf("/home : inode_no:%d type:%d size:%d\n",stat.st_inode_no,stat.st_ft,stat.st_size);
+	printk("%s",buf);
 	while(1){};
 	return 0;
 }

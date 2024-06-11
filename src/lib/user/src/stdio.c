@@ -29,6 +29,17 @@ static uint32_t itoa(uint32_t val,char*buf,uint8_t base)
     return len;
 }
 
+static uint32_t int2string(int val,char*buf)
+{
+    uint32_t len = 0;
+    if(val<0){
+        buf[len++]='-';
+        val = -val;
+    }
+    len=itoa((uint32_t)val,buf+len,10) + len;
+    return len;
+}
+
 /*将格式化字符串转换后放入str缓冲区*/
 uint32_t vsprintf(char*const str,const char*format,va_list ap)
 {
@@ -49,9 +60,15 @@ uint32_t vsprintf(char*const str,const char*format,va_list ap)
                     strncpy(pbuf,buf,len);
                     pbuf+=len;
                     break;
+                case 'u': ;
+                    val=va_arg(ap,uint32_t);
+                    len = itoa(val,buf,10);
+                    strncpy(pbuf,buf,len);
+                    pbuf+=len;
+                    break;
                 case 'd': ;
                     val = va_arg(ap,int);
-                    len = itoa(val,buf,10);
+                    len = int2string(val,buf);
                     strncpy(pbuf,buf,len);
                     pbuf+=len;
                     break;
