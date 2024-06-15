@@ -51,7 +51,6 @@ void int_kbd_handler(void)
 		char cur_char = keymap[index][shift_tag];
 		if(cur_char!=0){
 			if(!isIOQueueFull(&kbd_buf)){
-				put_char(cur_char);
 				ioq_put_char(&kbd_buf,cur_char);
 				return ;
 			}
@@ -62,11 +61,10 @@ void int_kbd_handler(void)
 		else if(code == caps_lock_make) caps_lock_status = !caps_lock_status;
 	}
 	else{
-		if(code==up_make) cursor_up();
-		else if(code == down_make) cursor_down();
-		else if(code == left_make) cursor_left();
-		else if(code == right_make) cursor_right();
-		//put_int(code);
+		if(code==up_make) ioq_put_char(&kbd_buf,0x81);
+		else if(code == down_make) ioq_put_char(&kbd_buf,0x82);
+		else if(code == left_make) ioq_put_char(&kbd_buf,0x83);
+		else if(code == right_make) ioq_put_char(&kbd_buf,0x84);
 	}
 	
 }	

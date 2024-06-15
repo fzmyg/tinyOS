@@ -20,9 +20,9 @@ pid_t getpid(void)
     return (pid_t)_SYSCALL0(GET_PID);
 }
 
-uint32_t print(const char*str)
+void clear(void)
 {
-    return (uint32_t)_SYSCALL1(PRINT,str);
+    _SYSCALL0(CLR_SCREEN);
 }
 
 void* malloc(uint32_t size)
@@ -32,7 +32,7 @@ void* malloc(uint32_t size)
 
 void free(void*ptr)
 {
-    _SYSCALL1(FREE,ptr);   
+    _SYSCALL1(FREE,ptr);
 }
 
 int open(const char* path,uint32_t o_mode)
@@ -110,4 +110,9 @@ int chdir(const char* path)
 int stat(const char*file_path,struct file_stat* stat)
 {
     return _SYSCALL2(STAT,file_path,stat);
+}
+
+pid_t fork(void)
+{
+    return _SYSCALL0(FORK);
 }

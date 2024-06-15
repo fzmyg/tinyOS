@@ -107,7 +107,7 @@ uint32_t printf(const char* format,...)
     va_start(arg,format);
     char buf[1024]={0}; 
     uint32_t len = vsprintf(buf,format,arg);
-    len = print(buf);
+    len = write(stdout,buf,len);
     return len;
 }
 
@@ -119,4 +119,12 @@ uint32_t sprintf(char*buf,const char*format,...)
     uint32_t len=vsprintf(buf,format,args);
     va_end(args);
     return len;
+}
+
+int putchar(int ch)
+{
+    char buf[4]={0};
+    sprintf(buf,"%c",ch);
+    write(stdout,buf,1);
+    return ch;
 }

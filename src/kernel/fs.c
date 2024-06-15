@@ -10,6 +10,7 @@
 #include"stdiok.h"
 #include"interrupt.h"
 #include"console.h"
+#include"keyboard.h"
 struct partition* cur_part;
 
 /*创建文件系统*/
@@ -496,9 +497,16 @@ int32_t sys_write(int32_t fd,const char* buf ,uint32_t count)
 
 int32_t sys_read(int32_t fd,char*buf,uint32_t count)
 {
+    if(count==0) return -1;
     if(fd==stdout_no|| fd==stderr_no || buf==NULL || fd == -1) return -1;
     if(fd == stdin_no){
-       
+        uint32_t i = 0;
+        while(i<count){
+            char ch = ioq_get_char(&kbd_buf);
+            buf[i] = ch;
+            i++;
+        }
+        return count;
     }
     int32_t read_byte_cnt = -1;
     struct file* file = &file_table[convert_fd2ft_idx(fd)];

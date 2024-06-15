@@ -70,4 +70,6 @@ extern void initMemBlockDesc(struct mem_block_desc * k_mem_block_descs);
 extern void*sys_malloc(uint32_t cnt);
 
 extern void sys_free(void* ptr);
+
+extern void* malloc1PageByVaddrWithoutVaddrPool(enum pool_flags pf,void* vaddr);
 #endif

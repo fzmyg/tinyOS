@@ -2,6 +2,9 @@
 #include"debug.h"
 #include"interrupt.h"
 #include"string.h"
+enum waiter_flags{
+	CONSUMER,PRODUCER
+};
 void initIOQueue(struct ioqueue*pq)
 {
 	memset(pq,0,sizeof(struct ioqueue));
@@ -23,49 +26,52 @@ bool isIOQueueEmpty(const struct ioqueue*pq)
 	return pq->write_index == pq->read_index;
 }
 
-static void ioq_wait(struct task_struct** pthread)
+static void ioq_wait(struct ioqueue*ioq,enum waiter_flags wf)
 {
-	ASSERT(pthread!=NULL&&*pthread==NULL);
-	*pthread = getpcb();
+	struct task_struct** ppcb = wf==CONSUMER?&(ioq->consumer_waiter):&(ioq->producer_waiter);
+	acquireLock(&ioq->lock);
+	ASSERT(*ppcb==NULL);
+	*ppcb = getpcb();
+	releaseLock(&ioq->lock);
 	thread_block(TASK_BLOCKED);
 }
 
-static void ioq_wakeup(struct task_struct**pthread)
+static void ioq_wakeup(struct ioqueue* ioq,enum waiter_flags wf)
 {
-	ASSERT(pthread!=NULL&&*pthread!=NULL);
-	thread_unblock(*pthread);
-	*pthread = NULL;
+	struct task_struct** ppcb = wf==CONSUMER?&(ioq->consumer_waiter):&(ioq->producer_waiter);
+	struct task_struct* pcb_wake = NULL;
+	acquireLock(&ioq->lock);
+	ASSERT(*ppcb!=NULL);
+	pcb_wake = *ppcb;
+	*ppcb = NULL;
+	releaseLock(&ioq->lock);
+	thread_unblock(pcb_wake);
 }
 
 char ioq_get_char(struct ioqueue*pq)
 {
-	enum int_status stat = closeInt();
-	while(isIOQueueEmpty(pq)){
-		acquireLock(&pq->lock);
-		ioq_wait(&pq->consumer_waiter);
-		releaseLock(&pq->lock);
+	while(isIOQueueEmpty(pq)){//队列为空，将当前进程阻塞并加入到消费者等待队列
+		ioq_wait(pq,CONSUMER);
 	}
-	
+	acquireLock(&pq->lock);
 	char ch = pq -> buf[pq->read_index];
 	pq->read_index = nextPos(pq->read_index);
 	if(pq->producer_waiter!=NULL) 
-		ioq_wakeup(&pq->producer_waiter);
-	setIntStatus(stat);
+		ioq_wakeup(pq,PRODUCER);//唤醒等待的生产者
+	releaseLock(&pq->lock);
 	return ch;
 }
+
 void ioq_put_char(struct ioqueue*pq,char ch)
 {
-	enum int_status stat = closeInt();
 	while(isIOQueueFull(pq)){
-		acquireLock(&pq->lock);
-		ioq_wait(&pq->producer_waiter);  //block current thread
-		releaseLock(&pq->lock);
+		ioq_wait(pq,PRODUCER);  //block current thread
 	}
-	
+	acquireLock(&pq->lock);
 	pq->buf[pq->write_index]=ch;
 	pq->write_index = nextPos(pq->write_index);
 	if(pq->consumer_waiter != NULL)
-		ioq_wakeup(&pq->consumer_waiter);
-	setIntStatus(stat);
+		ioq_wakeup(pq,CONSUMER);
+	releaseLock(&pq->lock);
 }
 

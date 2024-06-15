@@ -7,13 +7,15 @@
 #include"interrupt.h"
 #include"tss.h"
 #include"debug.h"
+#include"stdio.h"
+#include"syscall.h"
 /*
  * 初始化用户虚拟内存池
  * */
 void initUserVaddrPool(struct task_struct*pthread)
 {
 	pthread->vaddr_pool.vm_start = USER_VADDR_START;
-	uint32_t bitmap_pg_cnt = DIV_ROUND_UP((0xc0000000-USER_VADDR_START)/PG_SIZE/8,PG_SIZE);
+	uint32_t bitmap_pg_cnt = DIV_ROUND_UP(DIV_ROUND_UP((KERNEL_VADDR_START-USER_VADDR_START)/PG_SIZE,8),PG_SIZE);
 	void*pbitmap = mallocKernelPage(bitmap_pg_cnt);
 	ASSERT(pbitmap!=NULL);
 	pthread->vaddr_pool.bitmap.pbitmap = pbitmap;
@@ -55,7 +57,7 @@ static void processBooter(void* filename)
 }
 
 /* 激活页表 */
-static void activatePDT(struct task_struct*pcb)
+void activatePDT(struct task_struct*pcb)
 {
         void* pdt_paddr = (void*)0x100000;     //内核页表物理地址
         uint32_t pdt_vaddr = pcb->pgdir_vaddr; //pcb的虚拟地址
@@ -79,5 +81,18 @@ void executeProcess(void* filename,char*process_name)
 	proc_pcb->pgdir_vaddr = (uint32_t)createPDT();
 	proc_pcb->pid = createPid();	
 	setIntStatus(stat);
+}
+
+extern void shell(void);
+void init(void)
+{
+	uint32_t ret_pid = fork();
+
+	if(ret_pid==0){
+		shell();
+	}else{
+		while(1);
+	}
+	while(1);
 }
 

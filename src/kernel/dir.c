@@ -17,6 +17,8 @@ void open_root_dir(struct partition*part)
 /*打开inode_no号目录*/
 struct dir* open_dir(struct partition*part,uint32_t inode_no)
 {
+    if(inode_no==0)
+        return &root_dir;
     struct dir*dir=(struct dir*)sys_malloc(sizeof(struct dir));
     if(dir==NULL){
        return NULL;

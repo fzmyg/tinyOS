@@ -137,11 +137,11 @@ print:
 setup_page:
 	mov ecx,4096
 	mov esi,0
-	clear_page_dir_mem:
+	.clear_page_dir_mem: ;清空页目录
 		mov byte [PAGE_DIR_TABLE_ADDR+esi],0	
 		inc esi
-		loop clear_page_dir_mem
-	create_pde:
+		loop .clear_page_dir_mem
+	.create_pde:
 		mov eax,PAGE_DIR_TABLE_ADDR
 		add eax,0x1000
 		or eax, PG_US_U | PG_WR_W | PG_P
@@ -150,28 +150,29 @@ setup_page:
 		sub eax,0x1000
 		mov [PAGE_DIR_TABLE_ADDR+1023*4],eax ; the last dir ---> the first dir
 	
-	;create the first pte    the behind 256 entries map the physical memory address 0x00000---0xfffff cap:1MB
+	;修改前256页表项，映射低端1MB内存
 		mov ebx,PAGE_DIR_TABLE_ADDR+0x1000
 		mov ecx,256
 		xor esi,esi
 		xor edx,edx
 		mov edx,PG_US_U|PG_WR_W|PG_P
-	create_pte:
+	.create_pte:
 		mov [ebx+esi*4],edx
 		add edx,4096
 		inc esi
-		loop create_pte
+		loop .create_pte
 	
+	;修改254个页表项,作用：可避免一个进程申请操作系统内核空间进程间页目录表需要同步的问题，因此需提前写好内核页目录项
 		mov eax,PAGE_DIR_TABLE_ADDR+0x2000
 		mov ecx,254
 		mov esi,769
 		mov ebx,PAGE_DIR_TABLE_ADDR
 		or eax,PG_US_U|PG_WR_W|PG_P
-	create_kernel_pde:
+	.create_kernel_pde:
 		mov [ebx+esi*4],eax
 		inc esi
 		add eax,0x1000
-		loop create_kernel_pde
+		loop .create_kernel_pde
 		ret	
 
 read_kernel:

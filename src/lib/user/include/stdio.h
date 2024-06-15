@@ -9,9 +9,15 @@ typedef char* va_list;
 #define va_arg(parg,type) (*((type*)((parg+=sizeof(type))-sizeof(type))))   //移动参数指针并返回函数参数
 #define va_end(parg) parg = NULL                                            //将参数指针置空
 
+enum stdio_no{
+    stdin,stdout,stderr
+};
+
 extern uint32_t printf(const char*fotmat,...);
 
 extern uint32_t vsprintf(char*buf,const char*format,va_list va);
 
 extern uint32_t sprintf(char*buf,const char*format,...);
+
+extern int putchar(int ch);
 #endif

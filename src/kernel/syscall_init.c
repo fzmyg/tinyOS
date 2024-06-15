@@ -6,6 +6,7 @@
 #include"string.h"
 #include"memory.h"
 #include"fs.h"
+#include"fork.h"
 void* syscall_table[SYSCALL_NR]={0};
 
 static pid_t sys_getpid(void)
@@ -13,17 +14,16 @@ static pid_t sys_getpid(void)
     return getpcb()->pid;
 }
 
-static uint32_t sys_print(const char*s)
+extern void cls(void);
+static void sys_clr_screen(void)
 {
-    console_put_str(s);
-    return strlen(s);
+    cls();
 }
 
 void initSyscall(void)
 {
     put_str("init syscall start\n");
     syscall_table[GET_PID]=&sys_getpid; 
-    syscall_table[PRINT]=&sys_print;
     syscall_table[MALLOC]=&sys_malloc;
     syscall_table[FREE]=&sys_free;
     syscall_table[OPEN]=&sys_open;
@@ -41,5 +41,7 @@ void initSyscall(void)
     syscall_table[GETCWD]=&sys_getcwd;
     syscall_table[CHDIR]=&sys_chdir;
     syscall_table[STAT] = &sys_stat;
+    syscall_table[CLR_SCREEN] = &sys_clr_screen;
+    syscall_table[FORK]=&sys_fork;
     put_str("init syscall done\n");
 }

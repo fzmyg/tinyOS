@@ -8,6 +8,7 @@
 #include"process.h"
 #include"sync.h"
 #include"global.h"
+#include"process.h"
 struct task_struct* main_thread;
 struct list thread_ready_list;
 struct list thread_all_list;
@@ -29,7 +30,7 @@ static void initPidPool(void){
 	pid_pool.bitmap.pbitmap = sys_malloc(DIV_ROUND_UP(MAX_PROCESS_CNT,8));
 	ASSERT(pid_pool.bitmap.pbitmap!=NULL);
 	pid_pool.bitmap.bitmap_byte_len = DIV_ROUND_UP(MAX_PROCESS_CNT,8);
-	setBitmap(&pid_pool.bitmap,0,1);
+	memset(pid_pool.bitmap.pbitmap,0,pid_pool.bitmap.bitmap_byte_len);
 	initLock(&pid_pool.lock);
 }
 
@@ -40,6 +41,7 @@ pid_t createPid(void)
 	for(;bite_index<MAX_PROCESS_CNT;bite_index++){
 		if(bitIsUsed(&pid_pool.bitmap,bite_index)==false){
 			setBitmap(&pid_pool.bitmap,bite_index,1);
+			releaseLock(&pid_pool.lock);
 			return bite_index+1;
 		}
 	}
@@ -47,7 +49,7 @@ pid_t createPid(void)
 	return -1;
 }
 
-void remotePid(pid_t pid)
+void removePid(pid_t pid)
 {
 	acquireLock(&pid_pool.lock);
 	ASSERT(bitIsUsed(&pid_pool.bitmap,pid-1)==true);
@@ -153,8 +155,7 @@ static void make_main_thread(void)
 	ASSERT(!find_elem(&thread_all_list,&main_thread->all_node));
 	list_append(&thread_all_list,&main_thread->all_node); 
 	thread_tag = &main_thread->ready_node;
-	initPidPool();
-	main_thread->pid = 1;
+	main_thread->pid = 0;
 }
 
 
@@ -184,6 +185,7 @@ void schedule(void)
 	thread_tag =list_pop(&thread_ready_list);                  			  //get first process's node form pcb queue
 	struct task_struct*next_pcb = (struct task_struct*)elem2entry(struct task_struct,ready_node,thread_tag);
 	activateProcess(next_pcb);
+	//put_str("switch thread : form");put_str(cur_pcb->name);put_char(' ');put_int(cur_pcb->pid);put_char(' ');put_str("to");put_str(next_pcb->name);put_int(next_pcb->pid);put_char('\n');
 	next_pcb -> status = TASK_RUNNING;
 	if (cur_pcb -> status == TASK_DIED) 
 		switch_to_and_free(cur_pcb,next_pcb);
@@ -200,7 +202,9 @@ void initThread(void)
 	put_str("init thread start\n");
 	list_init(&thread_ready_list);
 	list_init(&thread_all_list);
+	initPidPool();
 	make_main_thread();
+	//executeProcess(init,"init");
 	idle_thread = thread_start("idle",10,&idle,NULL); //初始化idle线程
 	put_str("init thread done\n");
 }

@@ -77,6 +77,7 @@ struct inode* open_inode(struct partition* part,uint32_t i_no)
     pcb->pgdir_vaddr = NULL;
     struct inode* inode = (struct inode*)sys_malloc(sizeof(struct inode));  //从内核空间开辟内存，达到进程间共享
     if(inode==NULL){
+        setIntStatus(stat);
         return NULL;
     }
     pcb -> pgdir_vaddr = addr;
@@ -84,6 +85,7 @@ struct inode* open_inode(struct partition* part,uint32_t i_no)
     char* buf = (char*)sys_malloc(SECTOR_SIZE*read_cnt);
     if(buf == NULL){
         sys_free(inode);
+        setIntStatus(stat);
         return NULL;
     }
     readDisk(buf,part->my_disk,inode_pos.sector_lba,read_cnt);

@@ -5,6 +5,8 @@
 #include"fs.h"
 /*获取进程ID*/
 extern pid_t getpid(void);
+/*清屏*/
+extern void clear(void);
 /*项屏幕输出*/
 extern uint32_t print(const char*s);
 /*申请内存*/
@@ -41,4 +43,6 @@ extern int getcwd(char*buf,unsigned int size);
 extern int chdir(const char* path);
 /*查看文件属性*/
 extern int stat(const char*file_path,struct file_stat*stat);
+/*复制进程*/
+extern pid_t fork(void);
 #endif

@@ -173,7 +173,6 @@ void* mallocPage(enum pool_flags pf,uint32_t pg_cnt)
 void* mallocKernelPage (uint32_t pg_cnt)
 {
 	void*vmaddr_start = mallocPage(PF_KERNEL,pg_cnt);
-	//if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
 	return vmaddr_start;
 }
 /*
@@ -182,7 +181,6 @@ void* mallocKernelPage (uint32_t pg_cnt)
 void* mallocUserPage(uint32_t pg_cnt)
 {
 	void*vmaddr_start = mallocPage(PF_USER,pg_cnt);
-	//if(vmaddr_start !=  NULL) memset(vmaddr_start,0,PG_SIZE*pg_cnt);
 	return vmaddr_start;
 }
 /*
@@ -203,6 +201,18 @@ void* mallocOnePageByVaddr(enum pool_flags pf,void* vaddr)
 	return vaddr;
 }
 
+//
+void* malloc1PageByVaddrWithoutVaddrPool(enum pool_flags pf,void* vaddr)
+{
+	void * paddr = palloc(pf,1);
+	if(paddr==NULL){
+		return NULL;
+	}
+	mapVaddr2Paddr(vaddr,paddr);
+	return vaddr;
+}
+
+
 /* 释放内核页 */
 void freeKernelPage(void*vaddr)
 {
@@ -211,7 +221,7 @@ void freeKernelPage(void*vaddr)
 	setBitmap(&(kernel_vmpool.bitmap),bit_index,0);
 	uint32_t paddr = (*ppte)&0xfffff000;
 	bit_index = (paddr - kernel_pool.m_start)/0x1000;
-        setBitmap(&(kernel_vmpool.bitmap),bit_index,0);
+    setBitmap(&(kernel_vmpool.bitmap),bit_index,0);
 	(*ppte) = 0;
 }
 
