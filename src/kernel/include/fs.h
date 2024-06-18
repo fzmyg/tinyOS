@@ -52,7 +52,7 @@ extern int32_t sys_read(int fd,char*buf,uint32_t count);
 //调整文件操作指针
 extern int32_t sys_lseek(int fd,int off,uint32_t whence);
 //删除文件
-extern bool sys_unlink(const char* file_path);
+extern int32_t sys_unlink(const char* file_path);
 //创建目录
 extern int32_t sys_mkdir(const char* dir_path);
 //打开目录
@@ -64,7 +64,7 @@ extern struct dir_entry* sys_readdir(struct dir*dir);
 //设置目录读取指针
 extern void sys_rewinddir(struct dir*dir);
 //删除目录
-extern bool sys_rmdir(const char* dir_path);
+extern int32_t sys_rmdir(const char* dir_path);
 //获取当前工作目录
 extern int sys_getcwd(char* path_buf,uint32_t size);
 //改变工作目录

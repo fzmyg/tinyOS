@@ -1,7 +1,7 @@
 LD := ld
 LDFLAGES := -melf_i386 -Ttext 0xc0001500 -emain
 CC := gcc
-CFLAGES := -c -Wall -fno-builtin -W -Wstrict-prototypes -Wmissing-prototypes -m32 -g
+CFLAGES := -c -Wall -fno-builtin -W -Wstrict-prototypes -Wmissing-prototypes -m32 -g -O0 -fno-stack-protector
 AS := nasm
 ASFLAGES := -f elf32 -g
 #kernel options
@@ -63,7 +63,7 @@ compile_oskernel:
 install_kernel: compile_oskernel os_kernel
 	dd if=./src/bin/os_kernel of=./hd60M.img bs=512 count=400 seek=10 conv=notrunc
 os_kernel:${C_OBJECT} ${S_OBJECT}
-	${LD} src/kernel/bin/main.o src/kernel/bin/init.o src/kernel/bin/interrupt.o src/kernel/bin/kernel.o src/kernel/bin/timer.o src/kernel/bin/fork.o src/kernel/bin/memory.o ./src/kernel/bin/thread.o ./src/kernel/bin/switch.o ./src/kernel/bin/sync.o ./src/kernel/bin/console.o ./src/kernel/bin/keyboard.o ./src/kernel/bin/ioqueue.o ./src/kernel/bin/tss.o  ./src/kernel/bin/syscall_init.o ./src/kernel/bin/syscall.o  ./src/kernel/bin/process.o ./src/kernel/bin/shell.o ./src/kernel/bin/ide.o  ./src/kernel/bin/fs.o ./src/kernel/bin/inode.o ./src/kernel/bin/file.o ./src/kernel/bin/dir.o ./src/lib/user/bin/stdio.o ./src/lib/kernel/bin/stdiok.o ./src/lib/kernel/bin/print.o ./src/lib/kernel/bin/debug.o ./src/lib/kernel/bin/string.o -o ./src/bin/os_kernel ./src/lib/kernel/bin/bitmap.o ./src/lib/kernel/bin/list.o ${LDFLAGES}
+	${LD} src/kernel/bin/main.o src/kernel/bin/init.o src/kernel/bin/interrupt.o src/kernel/bin/kernel.o src/kernel/bin/timer.o src/kernel/bin/fork.o src/kernel/bin/memory.o ./src/kernel/bin/thread.o ./src/kernel/bin/switch.o ./src/kernel/bin/sync.o ./src/kernel/bin/console.o ./src/kernel/bin/keyboard.o ./src/kernel/bin/ioqueue.o ./src/kernel/bin/tss.o  ./src/kernel/bin/syscall_init.o ./src/kernel/bin/syscall.o  ./src/kernel/bin/process.o ./src/kernel/bin/shell.o ./src/kernel/bin/buildin.o ./src/kernel/bin/ide.o  ./src/kernel/bin/fs.o ./src/kernel/bin/inode.o ./src/kernel/bin/file.o ./src/kernel/bin/dir.o ./src/lib/user/bin/stdio.o ./src/lib/kernel/bin/stdiok.o ./src/lib/kernel/bin/print.o ./src/lib/kernel/bin/debug.o ./src/lib/kernel/bin/string.o -o ./src/bin/os_kernel ./src/lib/kernel/bin/bitmap.o ./src/lib/kernel/bin/list.o ${LDFLAGES}
 ./src/kernel/bin/%.o:./src/kernel/%.c
 	@mkdir -p ${dir $@}
 	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 

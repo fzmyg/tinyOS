@@ -203,10 +203,10 @@ static uint32_t getFileName(char*file_name,const char*file_path)
 
 static int getMeanOfPathPara(char* start,char*end)
 {
-    int len = end - start -1;
-    if(len == 2 && start[1]=='.'&&start[2]=='.')
+    int len = end - start ;
+    if(len == 2 && start[0]=='.'&&start[1]=='.')
         return 3;
-    if(len == 1 && start[1]=='.')
+    if(len == 1 && start[0]=='.')
         return 2;
     
     return 1;
@@ -231,12 +231,15 @@ static char* convertAbsPath(const char*path)
         int i = 0;
         char*p =NULL;
         while((uint32_t)i<std_path_len){
-            for(;(uint32_t)scan_index<std_path_len&&std_path[scan_index]!='/';scan_index++);
+            while(i<(int32_t)std_path_len&&std_path[i]=='/') i++;
+            if(i==(int32_t)std_path_len) break;
+            for(scan_index=i+1;(uint32_t)scan_index<std_path_len&&std_path[scan_index]!='/';scan_index++);
             int mean = getMeanOfPathPara(std_path+i,std_path+scan_index);
             switch (mean){
                 case 1: //为普通路径
-                    memcpy(abs_path+abs_path_len,std_path+i,scan_index - i);
-                    abs_path_len += (scan_index - i);
+                    abs_path[abs_path_len]='/';
+                    memcpy(abs_path + abs_path_len + 1,std_path+i,scan_index - i);
+                    abs_path_len += (scan_index - i + 1);
                     break;
                 case 2: //为 .
                     break;
@@ -249,7 +252,6 @@ static char* convertAbsPath(const char*path)
                     break;
             }
             i = scan_index;
-            scan_index++;
         }
         if(abs_path_len == 0) {
             abs_path[0] = '/';
@@ -265,20 +267,23 @@ static char* convertAbsPath(const char*path)
             sys_free(cwd);
             return NULL;
         }
-        int i = -1; char* p =NULL;
+        int i = 0; char* p =NULL;
         scan_index = 0;
-        while((uint32_t)i<std_path_len){
-            for(;(uint32_t)scan_index<std_path_len&&std_path[scan_index]!='/';scan_index++);
+        while(i<(int32_t)std_path_len){
+            while(i<(int32_t)std_path_len&&std_path[i]=='/') i++;
+            if(i==(int32_t)std_path_len) break;
+            for(scan_index=i+1;(uint32_t)scan_index<std_path_len&&std_path[scan_index]!='/';scan_index++);
             int mean = getMeanOfPathPara(std_path+i,std_path+scan_index);
             switch (mean){
                 case 1: //为普通路径
-                    if(i==-1){
+                    if(cwd[cwd_len-1]!='/'){
                         cwd[cwd_len]='/';
-                        memcpy(cwd+cwd_len+1,std_path+i+1,scan_index-i-1);
+                        memcpy(cwd+cwd_len+1,std_path+i,scan_index-i);
+                        cwd_len += (scan_index-i+1);
                     }else{
                         memcpy(cwd+cwd_len,std_path+i,scan_index-i);
+                        cwd_len += (scan_index-i);
                     }
-                    cwd_len += (scan_index-i);
                     break;
                 case 2: //为 .
                     break;
@@ -291,10 +296,10 @@ static char* convertAbsPath(const char*path)
                     break;
             }
             i = scan_index;
-            scan_index ++ ;
         }
     }
     sys_free(std_path);
+    if(abs_path[0]==0) abs_path[0]='/';
     return abs_path;
 }
 
@@ -377,8 +382,8 @@ static int searchFile(const char* path,struct searched_path_record*path_record)
                 return dir_e.i_no;
             }
         }else{
-            if(path_record->parent_dir!=&root_dir)
-                close_dir(path_record->parent_dir);
+            //if(path_record->parent_dir!=&root_dir)
+                //close_dir(path_record->parent_dir);
             sys_free(new_path);
             sys_free(search_name);
             return -1;
@@ -551,28 +556,30 @@ int32_t sys_lseek(int fd ,int32_t offset,uint32_t whence)
 }
 
 //删除文件
-bool sys_unlink(const char* file_path)
+int32_t sys_unlink(const char* file_path)
 {
     if(file_path==NULL) return false;
     char* abs_path = convertAbsPath(file_path);
     if(abs_path==NULL){
         printk("file path format error\n");
-        return false;
+        return -1;
     }
     struct searched_path_record record;
+    memset(&record,0,sizeof(struct searched_path_record));
     int inode_no = searchFile(abs_path,&record);
     //未找到文件
     if(inode_no==-1){
         printk("can`t remove %s : no such file \n",abs_path);
+        close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     //文件类型错误
     if(record.f_type==FT_DIRECTORY){
         printk("can not remove a directory\n");
         close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     //文件正在使用
     int i = 0;
@@ -582,7 +589,7 @@ bool sys_unlink(const char* file_path)
                 printk("this file is in use,not allow to delete!\n");
                 close_dir(record.parent_dir);
                 sys_free(abs_path);
-                return false;
+                return -1;
             }
         }
     }
@@ -590,7 +597,7 @@ bool sys_unlink(const char* file_path)
     //磁盘中删除目录项
     if(remove_dir_entry(record.parent_dir,inode_no,cur_part)==false){
         close_dir(record.parent_dir);
-        return false;
+        return -1;
     }
     //删除文件数据项
     if(remove_inode(inode_no,cur_part)==false){
@@ -601,10 +608,10 @@ bool sys_unlink(const char* file_path)
         sync_dir_entry(record.parent_dir,&dir_e);
         close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     sys_free(abs_path);
-    return true;
+    return 0;
 }
 
 int32_t sys_mkdir(const char* dir_path)
@@ -616,6 +623,7 @@ int32_t sys_mkdir(const char* dir_path)
         return -1;
     }
     struct searched_path_record record;
+    memset(&record,0,sizeof(struct searched_path_record));
     uint32_t roll_no = 0;
     int inode_no = searchFile(abs_path,&record);
     if(inode_no!=-1){
@@ -627,12 +635,14 @@ int32_t sys_mkdir(const char* dir_path)
             printk("searched file error\n");
         }
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         return -1;
     }
     inode_no = alloc_inode_bitmap(cur_part);
     if(inode_no==-1){
         printk("alloc inode bitmap error\n");
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         return -1;
     }
     sync_bitmap(INODE_BITMAP,cur_part,inode_no);
@@ -706,9 +716,11 @@ struct dir* sys_opendir(const char* dir_path)
     }
 
     struct searched_path_record record;
+    memset(&record,0,sizeof(struct searched_path_record));
     int32_t inode_no = searchFile(dir_path,&record);
     if(inode_no == -1){
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         printk("no such directory\n");
         return NULL;
     }
@@ -725,8 +737,12 @@ struct dir* sys_opendir(const char* dir_path)
 
 void sys_closedir(struct dir*dir)
 {
-    if(dir==&root_dir || dir==NULL)
-        return;
+    if(dir==NULL) return;
+    if(dir==&root_dir){
+        dir->read_entry_cnt=0;
+        return ;
+    }
+        
     close_dir(dir);
 }
 
@@ -740,50 +756,52 @@ void sys_rewinddir(struct dir*dir)
     dir->read_entry_cnt = 0;
 }
 
-bool sys_rmdir(const char* dir_path)
+int32_t sys_rmdir(const char* dir_path)
 {
     if(dir_path == NULL) return false;
     char* abs_path = convertAbsPath(dir_path);
     if(abs_path == NULL){
         printk("directory path format error\n");
-        return false;
+        return -1;
     }
     struct searched_path_record record;
-    int inode_no = searchFile(dir_path,&record);
+    memset(&record,0,sizeof(struct searched_path_record));
+    int inode_no = searchFile(abs_path,&record);
     if(inode_no == -1){
         printk("no such directory\n");
+        close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     if(record.f_type!=FT_DIRECTORY){
         printk("can not remove a regular file by rmdir\n");
         close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     struct dir* dir = open_dir(cur_part,inode_no);
     if(dir == NULL){
         close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     
     if(dir->inode->i_size != 2 * sizeof(struct dir_entry)){
         printk("the directory is not empty,can not remove it.\n");
         close_dir(dir); close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
 
     if(remove_empty_dir(record.parent_dir,dir,cur_part)==false){
         close_dir(dir); close_dir(record.parent_dir);
         sys_free(abs_path);
-        return false;
+        return -1;
     }
     close_dir(dir);
     close_dir(record.parent_dir);
     sys_free(abs_path);
-    return true;
+    return 0;
 }
 
 //获取指定目录的上级目录inode号
@@ -808,28 +826,23 @@ static int get_parent_inode_no(uint32_t inode_no,struct partition*part)
 // home/zbc/ ---> /zbc/home 由sys_getcwd调用
 static bool reversePath(char*path,uint32_t len)
 {
-    if(len==1){
-        path[0]='/';
-        return true;
-    }
-    char* new_path = (char*)sys_malloc(len);
-    if(new_path == NULL){
-        return false;
-    }
-    uint32_t index = 0;
-    int32_t i = len-1;
-    for(;i>=0;i--){
-        if(path[i]!='/') continue;
-        int32_t j = i - 1;
-        for(;j>=0;j--){
-            if(path[j]=='/')
-                break;
+    char* new_path = sys_malloc(len);
+    if(new_path==NULL) return false;
+    uint32_t new_path_len = 0;
+    int i = len - 1 , j = 0;
+    for(;i>0;i = j){
+        j=i-1;
+        while(j>0&&path[j]!='/') j--;
+        new_path[new_path_len] = '/';
+        if(j==0){
+            memcpy(new_path+new_path_len+1,path+j,i-j);
+            new_path_len+=(i-j+1);
+        }else{
+            memcpy(new_path+new_path_len+1,path+j+1,i-j-1);
+            new_path_len+=(i-j);
         }
-        new_path[index]='/';
-        memcpy(new_path+index+1,path+j+1,i-j+1);
-        index += (i-j);
     }
-    memcpy(path,new_path,len);
+    memcpy(path,new_path,new_path_len);
     sys_free(new_path);
     return true;
 }
@@ -888,9 +901,11 @@ int sys_chdir(const char* path)
         return -1;
     }
     struct searched_path_record record;
+    memset(&record,0,sizeof(struct searched_path_record));
     int inode_no = searchFile(abs_path,&record);
     if(inode_no==-1){ //未找到
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         printk("no such directory");
         return -1;
     }
@@ -915,9 +930,11 @@ int sys_stat(const char* file_path,struct file_stat * stat)
         return -1;
     }
     struct searched_path_record  record;
+    memset(&record,0,sizeof(struct searched_path_record));
     int32_t inode_no = searchFile(abs_path,&record);
     if(inode_no==-1){
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         return -1;
     }else if(inode_no==0){
         stat->st_size = root_dir.inode->i_size;
@@ -929,6 +946,7 @@ int sys_stat(const char* file_path,struct file_stat * stat)
     struct inode* inode = open_inode(cur_part,inode_no);
     if(inode==NULL){
         sys_free(abs_path);
+        close_dir(record.parent_dir);
         return -1;
     }
     stat->st_size = inode->i_size;
@@ -936,5 +954,6 @@ int sys_stat(const char* file_path,struct file_stat * stat)
     close_inode(inode);
     stat->st_inode_no=inode_no;
     sys_free(abs_path);
+    close_dir(record.parent_dir);
     return 0;
 }

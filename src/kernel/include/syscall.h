@@ -24,11 +24,11 @@ extern int read(int fd,char* buf,uint32_t count);
 /*更改文件指针*/
 extern int lseek(int fd,int off,uint32_t whence);
 /*删除文件*/
-extern bool unlink(const char* file_name);
+extern int unlink(const char* file_name);
 /*创建目录*/
 extern int mkdir(const char* path);
 /*删除目录*/
-extern bool rmdir(const char* path);
+extern int rmdir(const char* path);
 /*打开目录*/
 extern struct dir* opendir(const char* path);
 /*关闭目录*/
@@ -45,4 +45,6 @@ extern int chdir(const char* path);
 extern int stat(const char*file_path,struct file_stat*stat);
 /*复制进程*/
 extern pid_t fork(void);
+/*打印全部进程信息*/
+extern int ps(void);
 #endif

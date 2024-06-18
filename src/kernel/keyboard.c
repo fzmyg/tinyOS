@@ -49,11 +49,17 @@ void int_kbd_handler(void)
 		
 		uint8_t index = code & 0xff; //remove high byte
 		char cur_char = keymap[index][shift_tag];
-		if(cur_char!=0){
+		if((cur_char=='l' || cur_char=='c' )&&ctrl_status==true){ //ctrl + l 快捷键
+			if(!isIOQueueFull(&kbd_buf)){
+				ioq_put_char(&kbd_buf,cur_char-'a');
+			}
+			return;
+		}
+		if(cur_char!=0){	
 			if(!isIOQueueFull(&kbd_buf)){
 				ioq_put_char(&kbd_buf,cur_char);
-				return ;
 			}
+			return;
 		}
 		if(code == shift_l_make || code == shift_r_make) shift_status = 1;
 		else if(code == ctrl_l_make || code == ctrl_r_make) ctrl_status = 1;

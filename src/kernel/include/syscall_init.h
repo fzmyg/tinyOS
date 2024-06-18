@@ -22,6 +22,7 @@ enum SYSCALL_OFFSET{
     STAT,
     CLR_SCREEN,
     FORK,
+    PS,
 };
 extern void initSyscall(void);
 

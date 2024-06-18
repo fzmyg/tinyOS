@@ -43,5 +43,6 @@ void initSyscall(void)
     syscall_table[STAT] = &sys_stat;
     syscall_table[CLR_SCREEN] = &sys_clr_screen;
     syscall_table[FORK]=&sys_fork;
+    syscall_table[PS]=&sys_ps;
     put_str("init syscall done\n");
 }

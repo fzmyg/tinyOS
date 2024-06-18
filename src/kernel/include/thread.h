@@ -7,7 +7,7 @@
 #define MAX_FILES_OPEN_PER_PROCESS 8
 
 typedef void(*thread_func)(void*);
-typedef int16_t pid_t;
+typedef int32_t pid_t;
 
 enum task_status{
 	TASK_RUNNING,
@@ -103,9 +103,11 @@ extern void thread_unblock(struct task_struct*pcb);
 extern void thread_yield(void);
 
 /*获取pid*/
-pid_t createPid(void);
+extern pid_t createPid(void);
 
 /*销毁pid*/
-void removePid(pid_t pid);
+extern void removePid(pid_t pid);
 
+/*打印进程信息*/
+extern void sys_ps(void);
 #endif

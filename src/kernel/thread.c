@@ -9,6 +9,8 @@
 #include"sync.h"
 #include"global.h"
 #include"process.h"
+#include"fs.h"
+#include"stdio.h"
 struct task_struct* main_thread;
 struct list thread_ready_list;
 struct list thread_all_list;
@@ -249,4 +251,76 @@ void thread_yield(void)
 	pcb -> status = TASK_READY;
 	schedule();
 	setIntStatus(stat);
+}
+
+static void pad_buf(char*buf,uint32_t buf_len,void* arg,const char mode)
+{
+	memset(buf,0,buf_len);
+	uint32_t i = 0;
+	switch (mode)
+	{
+		case 'x':
+			i=sprintf(buf,"%x",*(uint32_t*)arg);
+			break;
+		case 'u':
+			i=sprintf(buf,"%u",*(uint32_t*)arg);
+			break;
+		case 'd':
+			i=sprintf(buf,"%d",*(uint32_t*)arg);
+			break;
+		case 's':
+			i=sprintf(buf,"%s",(char*)arg);
+			break;
+	}
+	for(;i<buf_len;i++){
+		buf[i]=' ';
+	}
+	buf[buf_len-1]=0;
+}
+
+static void pad_print(struct list_elem*pelem,char*buf,uint32_t buf_len)
+{
+	struct task_struct * pcb = (struct task_struct*)elem2entry(struct task_struct,all_node,pelem);
+	pad_buf(buf,buf_len,pcb->name,'s');
+	sys_write(1,buf,buf_len);
+	pad_buf(buf,buf_len,&pcb->pid,'u');
+	sys_write(1,buf,buf_len);
+	pad_buf(buf,buf_len,&pcb->parent_pid,'u');
+	sys_write(1,buf,buf_len);
+	switch(pcb->status){
+		case TASK_RUNNING:
+			pad_buf(buf,buf_len,"RUNNING\0",'s');
+			break;
+		case TASK_READY:
+			pad_buf(buf,buf_len,"TASK_READY\0",'s');
+			break;
+		case TASK_BLOCKED:
+			pad_buf(buf,buf_len,"TASK_BLOCKED\0",'s');
+			break;
+		case TASK_WAITING:
+			pad_buf(buf,buf_len,"WAITTING\0",'s');
+			break;
+		case TASK_HANGING:
+			pad_buf(buf,buf_len,"HANGING\0",'s');
+			break;
+		case TASK_DIED:
+			pad_buf(buf,buf_len,"DIED\0",'s');
+			break;
+	}
+	sys_write(1,buf,strlen(buf));
+	pad_buf(buf,buf_len,&pcb->ticks,'u');
+	sys_write(1,buf,strlen(buf));
+	sys_write(1,"\n",1);
+}
+
+void sys_ps(void)
+{
+	const char* str = "COMMAND        PID           PPID             STATU           TICKS\n\0";
+	sys_write(1,str,strlen(str));
+	struct list_elem* pelem = thread_all_list.head.next;
+	char buf[16]={0};
+	while(pelem!=&thread_all_list.tail){
+		pad_print(pelem,buf,16);
+		pelem=pelem->next;
+	}
 }

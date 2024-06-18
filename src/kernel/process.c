@@ -9,6 +9,7 @@
 #include"debug.h"
 #include"stdio.h"
 #include"syscall.h"
+#include"shell.h"
 /*
  * 初始化用户虚拟内存池
  * */
@@ -83,7 +84,6 @@ void executeProcess(void* filename,char*process_name)
 	setIntStatus(stat);
 }
 
-extern void shell(void);
 void init(void)
 {
 	uint32_t ret_pid = fork();

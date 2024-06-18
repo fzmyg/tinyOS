@@ -31,7 +31,9 @@ struct dir* open_dir(struct partition*part,uint32_t inode_no)
 /*关闭目录*/
 void close_dir(struct dir*dir)
 {
-    if(dir==&root_dir)  return;
+    if(dir==&root_dir){  
+        return;
+    }
     close_inode(dir->inode);
     sys_free(dir);
 }
@@ -217,12 +219,12 @@ bool remove_dir_entry(struct dir*parent_dir,uint32_t inode_no,struct partition*p
     uint32_t addr_index = 0;
     uint32_t dir_entry_cnt_per_sector = SECTOR_SIZE/part->sb->dir_entry_size;
     for(;addr_index<140;addr_index++){
-        if(addr_buf[addr_index]){
+        if(addr_buf[addr_index]){ //若数据块存在
             readDisk(io_buf,part->my_disk,addr_buf[addr_index],1);
             uint32_t i =0;
             uint32_t empty_cnt = 0;
             bool found_tag = false;
-                for(i=0;i<dir_entry_cnt_per_sector;i++){
+                for(i=0;i<dir_entry_cnt_per_sector;i++){ //遍历数据块中条目
                     struct dir_entry*dir_e = ((struct dir_entry*)io_buf )+ i;
                     if(dir_e->i_no==inode_no){
                         found_tag = true;
@@ -233,27 +235,33 @@ bool remove_dir_entry(struct dir*parent_dir,uint32_t inode_no,struct partition*p
                         empty_cnt ++ ;
                     }
                 }
-                if(found_tag && empty_cnt == dir_entry_cnt_per_sector - 1){
+                if(found_tag&&empty_cnt == dir_entry_cnt_per_sector - 1){
                     setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
                     sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
                     //回收数据块
                     if(addr_index<12){
                         inode->i_sectors[addr_index]=0;
-                        sync_inode(inode,part);
                     }else if(addr_index==12){
                         setBitmap(&part->block_bitmap,inode->i_sectors[12]-part->sb->data_start_lba,0);
                         sync_bitmap(BLOCK_BITMAP,part,inode->i_sectors[12]-part->sb->data_start_lba);
                         inode->i_sectors[addr_index]=0;
-                        sync_inode(inode,part);
                     }else{
                         setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
                         sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
                         addr_buf[addr_index]=0;
                         writeDisk(addr_buf,part->my_disk,inode->i_sectors[12],1);
                     }
-            }
-            if(found_tag)
+                }
+                if(found_tag&&empty_cnt == dir_entry_cnt_per_sector - 3 && addr_index == 0){
+                    setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
+                    sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
+                    inode->i_sectors[addr_index]=0;
+                }
+            if(found_tag){
+                inode->i_size -= part->sb->dir_entry_size;
+                sync_inode(inode,part);
                 break;
+            }
         }
 
     }
@@ -284,36 +292,30 @@ struct dir_entry* read_dir_entry(struct dir* parent_dir,struct partition*part)
         readDisk(addr_buf+12,part->my_disk,parent_dir->inode->i_sectors[12],1);
     }
     int entry_cnt_per_sector = SECTOR_SIZE / part->sb->dir_entry_size;
-    int blocks_index = 0; uint32_t read_cnt =0;
+    int blocks_index = (parent_dir->read_entry_cnt + 1)/entry_cnt_per_sector; 
+    int entry_off = (parent_dir->read_entry_cnt)%entry_cnt_per_sector;
+    
     char* io_buf = sys_malloc(SECTOR_SIZE);
     if(io_buf==NULL){
         sys_free(addr_buf);
         return NULL;
     }
     struct dir_entry* dir_e = NULL;
-    for(;blocks_index<140;blocks_index++){
-        if(addr_buf[blocks_index]==0)
-            continue;
-        readDisk(io_buf,part->my_disk,addr_buf[blocks_index],1);
-        struct dir_entry* d_e = (struct dir_entry*)io_buf;
-        int i = 0;
-        for(;i<entry_cnt_per_sector;i++){
-            if(d_e[i].f_type!=FT_UNKNOW){
-                if(read_cnt == parent_dir->read_entry_cnt){
-                    dir_e = sys_malloc(sizeof(struct dir_entry));  
-                    if(dir_e==NULL){
-                        sys_free(addr_buf);sys_free(io_buf);
-                        return NULL;
-                    }
-                    memcpy(dir_e,d_e+i,sizeof(struct dir_entry));
-                    parent_dir->read_entry_cnt ++;
-                    sys_free(addr_buf);sys_free(io_buf);
-                    return dir_e;
-                }
-                read_cnt++;
-            }
+    if(addr_buf[blocks_index]!=0)
+    readDisk(io_buf,part->my_disk,addr_buf[blocks_index],1);
+    struct dir_entry* d_e = (struct dir_entry*)io_buf;
+    if(d_e[entry_off].f_type!=FT_UNKNOW){
+        dir_e = sys_malloc(sizeof(struct dir_entry));  
+        if(dir_e==NULL){
+            sys_free(addr_buf);sys_free(io_buf);
+            return NULL;
         }
+        memcpy(dir_e,d_e+entry_off,sizeof(struct dir_entry));
+        parent_dir->read_entry_cnt ++;
+        sys_free(addr_buf);sys_free(io_buf);
+        return dir_e;
     }
+    
     sys_free(addr_buf);sys_free(io_buf);
     return NULL;
 }

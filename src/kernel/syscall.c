@@ -61,7 +61,7 @@ int lseek(int fd,int off,uint32_t whence)
 }
 
 /*删除文件*/
-bool unlink(const char* file_name)
+int unlink(const char* file_name)
 {
     return _SYSCALL1(UNLINK,file_name);
 }
@@ -71,7 +71,7 @@ int mkdir(const char* path)
     return _SYSCALL1(MKDIR,path);
 }
 /*删除目录*/
-bool rmdir(const char* path)
+int rmdir(const char* path)
 {
     return _SYSCALL1(RMDIR,path);    
 }
@@ -115,4 +115,9 @@ int stat(const char*file_path,struct file_stat* stat)
 pid_t fork(void)
 {
     return _SYSCALL0(FORK);
+}
+
+int ps(void)
+{
+    return _SYSCALL0(PS);
 }
