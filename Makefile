@@ -5,30 +5,76 @@ CFLAGES := -c -Wall -fno-builtin -W -Wstrict-prototypes -Wmissing-prototypes -m3
 AS := nasm
 ASFLAGES := -f elf32 -g
 #kernel options
-KERNEL_INCLUDE_DIR := ./src/kernel/include
-C_SOURCE := ${shell find ./src/kernel/ -name  *.c}
-C_OBJECT := ${patsubst ./src/kernel/%.c,./src/kernel/bin/%.o,${C_SOURCE}}
-S_SOURCE := ${shell find ./src/kernel/ -name  *.s}
-S_OBJECT := ${patsubst ./src/kernel/%.s,./src/kernel/bin/%.o,${S_SOURCE}}
+KERNEL_INCLUDE_DIR := ./src/kernel
+C_KERNEL_SOURCE := ${shell find ./src/kernel/ -name  *.c}
+C_KERNEL_OBJECT := ${patsubst ./src/kernel/%.c,./src/build/%.o,${C_KERNEL_SOURCE}}
+S_KERNEL_SOURCE := ${shell find ./src/kernel/ -name  *.s}
+S_KERNEL_OBJECT := ${patsubst ./src/kernel/%.s,./src/build/%.o,${S_KERNEL_SOURCE}}
+
+#device options
+DEVICE_INCLUDE_DIR := ./src/device
+C_DEVICE_SOURCE := ${shell find ./src/device/ -name  *.c}
+C_DEVICE_OBJECT := ${patsubst ./src/device/%.c,./src/build/%.o,${C_DEVICE_SOURCE}}
+S_DEVICE_SOURCE := ${shell find ./src/device/ -name  *.s}
+S_DEVICE_OBJECT := ${patsubst ./src/device/%.s,./src/build/%.o,${S_DEVICE_SOURCE}}
+
+#fs options
+FS_INCLUDE_DIR := ./src/fs
+C_FS_SOURCE := ${shell find ./src/fs/ -name  *.c}
+C_FS_OBJECT := ${patsubst ./src/fs/%.c,./src/build/%.o,${C_FS_SOURCE}}
+S_FS_SOURCE := ${shell find ./src/fs/ -name  *.s}
+S_FS_OBJECT := ${patsubst ./src/fs/%.s,./src/build/%.o,${S_FS_SOURCE}}
+
+#mm options
+MM_INCLUDE_DIR := ./src/mm
+C_MM_SOURCE := ${shell find ./src/mm/ -name  *.c}
+C_MM_OBJECT := ${patsubst ./src/mm/%.c,./src/build/%.o,${C_MM_SOURCE}}
+S_MM_SOURCE := ${shell find ./src/mm/ -name  *.s}
+S_MM_OBJECT := ${patsubst ./src/mm/%.s,./src/build/%.o,${S_MM_SOURCE}}
+
+#proc options
+PROC_INCLUDE_DIR := ./src/proc
+C_PROC_SOURCE := ${shell find ./src/proc/ -name  *.c}
+C_PROC_OBJECT := ${patsubst ./src/proc/%.c,./src/build/%.o,${C_PROC_SOURCE}}
+S_PROC_SOURCE := ${shell find ./src/proc/ -name  *.s}
+S_PROC_OBJECT := ${patsubst ./src/proc/%.s,./src/build/%.o,${S_PROC_SOURCE}}
+
+#shell options
+SHELL_INCLUDE_DIR := ./src/shell
+C_SHELL_SOURCE := ${shell find ./src/shell/ -name  *.c}
+C_SHELL_OBJECT := ${patsubst ./src/shell/%.c,./src/build/%.o,${C_SHELL_SOURCE}}
+S_SHELL_SOURCE := ${shell find ./src/shell/ -name  *.s}
+S_SHELL_OBJECT := ${patsubst ./src/shell/%.s,./src/build/%.o,${S_SHELL_SOURCE}}
+
+#thread options
+THREAD_INCLUDE_DIR := ./src/thread
+C_THREAD_SOURCE := ${shell find ./src/thread/ -name  *.c}
+C_THREAD_OBJECT := ${patsubst ./src/thread/%.c,./src/build/%.o,${C_THREAD_SOURCE}}
+S_THREAD_SOURCE := ${shell find ./src/thread/ -name  *.s}
+S_THREAD_OBJECT := ${patsubst ./src/thread/%.s,./src/build/%.o,${S_THREAD_SOURCE}}
+
+#total kernel obj file
+C_OBJECT := ${C_KERNEL_OBJECT} ${C_DEVICE_OBJECT} ${C_FS_OBJECT} ${C_MM_OBJECT} ${C_THREAD_OBJECT} ${C_PROC_OBJECT} ${C_SHELL_OBJECT}
+S_OBJECT := ${S_KERNEL_OBJECT} ${S_DEVICE_OBJECT} ${S_FS_OBJECT} ${S_MM_OBJECT} ${S_THREAD_OBJECT} ${S_PROC_OBJECT} ${S_SHELL_OBJECT}
 
 #lib options
 LIB_KERNEL_DIR := ./src/lib/kernel
 LIB_KERNEL_INCLUDE_DIR := ${LIB_KERNEL_DIR}/include
 LIB_KERNEL_SRC_S := ${shell find ./src/lib/kernel/src -name *.s}
 LIB_KERNEL_SRC_C := ${shell find ./src/lib/kernel/src -name *.c}
-LIB_KERNEL_SRC_BIN_S :=${patsubst ./src/lib/kernel/src/%.s,./src/lib/kernel/bin/%.o,${LIB_KERNEL_SRC_S}}
-LIB_KERNEL_SRC_BIN_C :=${patsubst ./src/lib/kernel/src/%.c,./src/lib/kernel/bin/%.o,${LIB_KERNEL_SRC_C}}
+LIB_KERNEL_SRC_BIN_S :=${patsubst ./src/lib/kernel/src/%.s,./src/build/%.o,${LIB_KERNEL_SRC_S}}
+LIB_KERNEL_SRC_BIN_C :=${patsubst ./src/lib/kernel/src/%.c,./src/build/%.o,${LIB_KERNEL_SRC_C}}
 LIB_KERNEL_SRC_BIN := ${LIB_KERNEL_SRC_BIN_S} ${LIB_KERNEL_SRC_BIN_C}
 
 LIB_USER_DIR := ./src/lib/user
 LIB_USER_INCLUDE_DIR := ${LIB_USER_DIR}/include
 LIB_USER_SRC_S := ${shell find ./src/lib/user/src -name *.s}
 LIB_USER_SRC_C := ${shell find ./src/lib/user/src -name *.c}
-LIB_USER_SRC_BIN_S :=${patsubst ./src/lib/user/src/%.s,./src/lib/user/bin/%.o,${LIB_USER_SRC_S}}
-LIB_USER_SRC_BIN_C :=${patsubst ./src/lib/user/src/%.c,./src/lib/user/bin/%.o,${LIB_USER_SRC_C}}
+LIB_USER_SRC_BIN_S :=${patsubst ./src/lib/user/src/%.s,./src/build/%.o,${LIB_USER_SRC_S}}
+LIB_USER_SRC_BIN_C :=${patsubst ./src/lib/user/src/%.c,./src/build/%.o,${LIB_USER_SRC_C}}
 LIB_USER_SRC_BIN := ${LIB_USER_SRC_BIN_S} ${LIB_USER_SRC_BIN_C}
 
-INCLUDE_DIR := -I${LIB_KERNEL_INCLUDE_DIR} -I${LIB_USER_INCLUDE_DIR} -I${KERNEL_INCLUDE_DIR}
+INCLUDE_DIR := -I${LIB_KERNEL_INCLUDE_DIR} -I${LIB_USER_INCLUDE_DIR} -I${KERNEL_INCLUDE_DIR} -I${DEVICE_INCLUDE_DIR} -I${FS_INCLUDE_DIR} -I${MM_INCLUDE_DIR} -I${PROC_INCLUDE_DIR} -I${SHELL_INCLUDE_DIR} -I${THREAD_INCLUDE_DIR}
 .PHONY: boot
 boot:
 	./bin/bochs -f bochsrc
@@ -63,14 +109,56 @@ compile_oskernel:
 install_kernel: compile_oskernel os_kernel
 	dd if=./src/bin/os_kernel of=./hd60M.img bs=512 count=400 seek=10 conv=notrunc
 os_kernel:${C_OBJECT} ${S_OBJECT}
-	${LD} src/kernel/bin/main.o src/kernel/bin/init.o src/kernel/bin/interrupt.o src/kernel/bin/kernel.o src/kernel/bin/timer.o src/kernel/bin/fork.o src/kernel/bin/memory.o ./src/kernel/bin/thread.o ./src/kernel/bin/switch.o ./src/kernel/bin/sync.o ./src/kernel/bin/console.o ./src/kernel/bin/keyboard.o ./src/kernel/bin/ioqueue.o ./src/kernel/bin/tss.o  ./src/kernel/bin/syscall_init.o ./src/kernel/bin/syscall.o  ./src/kernel/bin/process.o ./src/kernel/bin/shell.o ./src/kernel/bin/buildin.o ./src/kernel/bin/ide.o  ./src/kernel/bin/fs.o ./src/kernel/bin/inode.o ./src/kernel/bin/file.o ./src/kernel/bin/dir.o ./src/lib/user/bin/stdio.o ./src/lib/kernel/bin/stdiok.o ./src/lib/kernel/bin/print.o ./src/lib/kernel/bin/debug.o ./src/lib/kernel/bin/string.o -o ./src/bin/os_kernel ./src/lib/kernel/bin/bitmap.o ./src/lib/kernel/bin/list.o ${LDFLAGES}
-./src/kernel/bin/%.o:./src/kernel/%.c
+	${LD} src/build/main.o src/build/init.o src/build/interrupt.o src/build/kernel.o src/build/timer.o src/build/fork.o src/build/memory.o ./src/build/thread.o ./src/build/switch.o ./src/build/sync.o ./src/build/console.o ./src/build/keyboard.o ./src/build/ioqueue.o ./src/build/tss.o  ./src/build/syscall_init.o ./src/build/syscall.o  ./src/build/process.o ./src/build/shell.o ./src/build/buildin.o ./src/build/ide.o  ./src/build/fs.o ./src/build/inode.o ./src/build/file.o ./src/build/dir.o ./src/build/stdio.o ./src/build/stdiok.o ./src/build/print.o ./src/build/debug.o ./src/build/string.o  ./src/build/bitmap.o ./src/build/list.o  -o ./src/bin/os_kernel ${LDFLAGES}
+#kernel
+./src/build/%.o:./src/kernel/%.c
 	@mkdir -p ${dir $@}
 	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
-./src/kernel/bin/%.o:./src/kernel/%.s
+./src/build/%.o:./src/kernel/%.s
 	@mkdir -p ${dir $@}
 	${AS}  ${ASFLAGES}  $< -o $@
-
+#device
+./src/build/%.o:./src/device/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/device/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
+#fs
+./src/build/%.o:./src/fs/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/fs/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
+#mm
+./src/build/%.o:./src/mm/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/mm/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
+#proc
+./src/build/%.o:./src/proc/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/proc/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
+#shell
+./src/build/%.o:./src/shell/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/shell/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
+#thread
+./src/build/%.o:./src/thread/%.c
+	@mkdir -p ${dir $@}
+	${CC} ${CFLAGES} ${INCLUDE_DIR}   $< -o $@ 
+./src/build/%.o:./src/thread/%.s
+	@mkdir -p ${dir $@}
+	${AS}  ${ASFLAGES}  $< -o $@
 
 .PHONY: lib compile_lib
 compile_lib:
@@ -80,17 +168,17 @@ compile_lib:
 lib: compile_lib ${LIB_KERNEL_SRC_BIN}  ${LIB_USER_SRC_BIN}
 	@echo "generate lib file :${LIB_KERNEL_SRC_BIN} ${LIB_USER_SRC_BIN}"
 #compilel kernel's lib
-${LIB_KERNEL_DIR}/bin/%.o:${LIB_KERNEL_DIR}/src/%.s
+./src/build/%.o:${LIB_KERNEL_DIR}/src/%.s
 	@mkdir -p ${dir $@}
 	${AS} ${ASFLAGES} -o$@ $<
-${LIB_KERNEL_DIR}/bin/%.o:${LIB_KERNEL_DIR}/src/%.c
+./src/build/%.o:${LIB_KERNEL_DIR}/src/%.c
 	@mkdir -p ${dir $@}
 	${CC} ${CFLAGES}  ${INCLUDE_DIR} -o$@  $<
 #compile user's lib
-${LIB_USER_DIR}/bin/%.o:${LIB_USER_DIR}/src/%.s
+./src/build/%.o:${LIB_USER_DIR}/src/%.s
 	@mkdir -p ${dir $@}
 	${AS} ${ASFLAGES} -o$@ $<
-${LIB_USER_DIR}/bin/%.o:${LIB_USER_DIR}/src/%.c
+./src/build/%.o:${LIB_USER_DIR}/src/%.c
 	@mkdir -p ${dir $@}
 	${CC} ${CFLAGES}  ${INCLUDE_DIR} -o$@  $<
 
@@ -100,7 +188,7 @@ all: install_mbr install_loader lib install_kernel
 
 .PHONY: clean
 clean:	
-	rm -rf ./src/bin/* ./src/bin/*.o ./src/kernel/bin/*.o ${LIB_KERNEL_DIR}/bin/*.o ${LIB_USER_DIR}/bin/*.o
+	rm -rf ./src/build/* ./src/bin/*
 
 .PHONY:
 clear_disk:
