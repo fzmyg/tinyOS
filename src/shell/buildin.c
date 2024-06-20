@@ -8,14 +8,14 @@
 extern char cmd_argv[MAX_PARAMENTS_NO][MAX_PARAMENTS_LEN];
 #define UNUSED __attribute__((unused))
 
-int32_t buildin_pwd(uint32_t argc UNUSED ,char argv[][MAX_PARA_LEN] UNUSED)
+int32_t buildin_pwd(uint32_t argc UNUSED ,char* argv[MAX_PARA_NO] UNUSED)
 {
     printf("%s\n",cwd_buf);
     return 0;
 }
 
 
-int32_t buildin_ls(uint32_t argc,char argv[][MAX_PARA_LEN])
+int32_t buildin_ls(uint32_t argc,char* argv[MAX_PARA_NO])
 {
     bool  l_tag = false,a_tag = false;
     uint32_t para_cnt = 0;
@@ -83,7 +83,7 @@ int32_t buildin_ls(uint32_t argc,char argv[][MAX_PARA_LEN])
     return 0;
 }
 
-int32_t buildin_ps(uint32_t argc,char argv[][MAX_PARA_LEN] UNUSED)
+int32_t buildin_ps(uint32_t argc,char* argv[MAX_PARA_NO] UNUSED)
 {
     if(argc!=1){
         printf("Invalid format:ps() should not have any arguments\n");
@@ -92,7 +92,7 @@ int32_t buildin_ps(uint32_t argc,char argv[][MAX_PARA_LEN] UNUSED)
     return ps();
 }
 
-int32_t buildin_mkdir(uint32_t argc,char argv[][MAX_PARA_LEN])
+int32_t buildin_mkdir(uint32_t argc,char* argv[MAX_PARA_NO])
 {
     if(argc!=2&&argv[1][0]=='-') {
         printf("Invalid format:mkdir() should not have any arguments except a pathstring\n");
@@ -105,10 +105,14 @@ int32_t buildin_mkdir(uint32_t argc,char argv[][MAX_PARA_LEN])
     return 0;
 }
 
-int32_t buildin_rm(uint32_t argc,char argv[][MAX_PARA_LEN])
+int32_t buildin_rm(uint32_t argc,char* argv[MAX_PARA_NO])
 {
     if(argc!=2&&argv[1][0]=='-') {
         printf("Invalid format:rmdir() should not have any arguments except a pathstring\n");
+        return -1;
+    }
+    if(strcmp(argv[1],".")==0 || strcmp(argv[1],"..")==0){
+        printf("can not remove such directory\n");
         return -1;
     }
     struct file_stat file_stat;
@@ -128,7 +132,7 @@ int32_t buildin_rm(uint32_t argc,char argv[][MAX_PARA_LEN])
     return 0;
 }
 
-int32_t buildin_cd(uint32_t argc,char argv[][MAX_PARA_LEN])
+int32_t buildin_cd(uint32_t argc,char* argv[MAX_PARA_NO])
 {
     if(argc!=2&&argv[1][0]=='-') {
         printf("Invalid format:rmdir() should not have any arguments except a pathstring\n");

@@ -9,7 +9,7 @@
 
 char cwd_buf[MAX_PATH_LEN];
 char cmd_buf[CMD_LEN];
-char cmd_argv[MAX_PARAMENTS_NO][MAX_PARAMENTS_LEN];
+char*cmd_argv[MAX_PARAMENTS_NO];
 uint32_t stat_pos;
 static uint32_t print_prompt(void)
 {
@@ -17,6 +17,7 @@ static uint32_t print_prompt(void)
     getcwd(cwd_buf,MAX_PATH_LEN);
     return printf("[zbccc@localhost:%s]$",cwd_buf);
 }
+
 
 static void readLine(char*buf,uint32_t count)
 {
@@ -71,6 +72,7 @@ static void readLine(char*buf,uint32_t count)
                 i--;
                 break;
             case 'c'-'a':
+                printf("^C");
                 putchar('\n');
                 i=-1;
                 memset(buf,0,count);
@@ -83,7 +85,7 @@ static void readLine(char*buf,uint32_t count)
     }
 }
 
-static int32_t  cmd_parse(const char*cmd,char argv[MAX_PARAMENTS_NO][MAX_PARAMENTS_LEN])
+static int32_t  cmd_parse(char*cmd,char* argv[MAX_PARAMENTS_NO])
 {
     int32_t cmd_len = (int32_t)strlen(cmd);
     int32_t argv_cnt = 0;
@@ -94,8 +96,8 @@ static int32_t  cmd_parse(const char*cmd,char argv[MAX_PARAMENTS_NO][MAX_PARAMEN
         j = i + 1;
         while(j<cmd_len && cmd[j]!=' ' && cmd[j]!='\0') j++;
         if(j-i>=MAX_PARAMENTS_LEN) return -1;
-        memset(argv[argv_cnt],0,j-i+1);
-        memcpy(argv[argv_cnt],cmd+i,j-i);
+        argv[argv_cnt] = cmd+i;
+        if(j<cmd_len) cmd[j]='\0';
         argv_cnt++;
         i = j;
     }
@@ -103,7 +105,7 @@ static int32_t  cmd_parse(const char*cmd,char argv[MAX_PARAMENTS_NO][MAX_PARAMEN
 }
 
 
-static int32_t execbuildin(uint32_t argv_cnt,char argv[MAX_PARAMENTS_NO][MAX_PARAMENTS_LEN])
+static int32_t execbuildin(uint32_t argv_cnt,char* argv[MAX_PARAMENTS_NO])
 {
     if(!strcmp(argv[0],"ls\0")){
         buildin_ls(argv_cnt,argv);
@@ -136,7 +138,8 @@ void shell(void)
     getcwd(cwd_buf,MAX_PATH_LEN);
     while(1){
         stat_pos=print_prompt();
-        memset(cmd_buf,0,CMD_LEN);
+        memset(cmd_buf,0,CMD_LEN); //清空输入缓冲区
+        memset(cmd_argv,0,sizeof(uint32_t)*MAX_PARAMENTS_NO);//清空命令解析缓冲区
         readLine(cmd_buf,CMD_LEN);//读取命令
         if(cmd_buf[0]==0) continue;
         //命令解析

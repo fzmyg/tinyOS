@@ -226,14 +226,15 @@ bool remove_dir_entry(struct dir*parent_dir,uint32_t inode_no,struct partition*p
             bool found_tag = false;
                 for(i=0;i<dir_entry_cnt_per_sector;i++){ //遍历数据块中条目
                     struct dir_entry*dir_e = ((struct dir_entry*)io_buf )+ i;
+                    if(dir_e->f_type == FT_UNKNOW){
+                        empty_cnt ++ ;
+                    }
                     if(dir_e->i_no==inode_no){ //找到相应项
                         found_tag = true;
                         memset(io_buf+i*part->sb->dir_entry_size,0,part->sb->dir_entry_size);
                         writeDisk(io_buf,part->my_disk,addr_buf[addr_index],1); //清空目录项并写入磁盘
                     }
-                    if(dir_e->f_type == FT_UNKNOW){
-                        empty_cnt ++ ;
-                    }
+
                 }
                 if(found_tag&&empty_cnt == dir_entry_cnt_per_sector - 1){
                     setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
@@ -245,11 +246,6 @@ bool remove_dir_entry(struct dir*parent_dir,uint32_t inode_no,struct partition*p
                         addr_buf[addr_index]=0;
                         writeDisk(addr_buf,part->my_disk,parent_inode->i_sectors[12],1);
                     }
-                }
-                if(found_tag&&empty_cnt == dir_entry_cnt_per_sector - 3 && addr_index == 0){
-                    setBitmap(&part->block_bitmap,addr_buf[addr_index]-part->sb->data_start_lba,0);
-                    sync_bitmap(BLOCK_BITMAP,part,addr_buf[addr_index]-part->sb->data_start_lba);
-                    parent_inode->i_sectors[0]=0;
                 }
             if(found_tag){
                 parent_inode->i_size -= part->sb->dir_entry_size;
@@ -286,8 +282,7 @@ struct dir_entry* read_dir_entry(struct dir* parent_dir,struct partition*part)
         readDisk(addr_buf+12,part->my_disk,parent_dir->inode->i_sectors[12],1);
     }
     int entry_cnt_per_sector = SECTOR_SIZE / part->sb->dir_entry_size;
-    int blocks_index = (parent_dir->read_entry_cnt + 1)/entry_cnt_per_sector; 
-    int entry_off = (parent_dir->read_entry_cnt)%entry_cnt_per_sector;
+    int index = 0 , read_cnt = 0; 
     
     char* io_buf = sys_malloc(SECTOR_SIZE);
     if(io_buf==NULL){
@@ -295,21 +290,29 @@ struct dir_entry* read_dir_entry(struct dir* parent_dir,struct partition*part)
         return NULL;
     }
     struct dir_entry* dir_e = NULL;
-    if(addr_buf[blocks_index]!=0)
-    readDisk(io_buf,part->my_disk,addr_buf[blocks_index],1);
-    struct dir_entry* d_e = (struct dir_entry*)io_buf;
-    if(d_e[entry_off].f_type!=FT_UNKNOW){
-        dir_e = sys_malloc(sizeof(struct dir_entry));  
-        if(dir_e==NULL){
-            sys_free(addr_buf);sys_free(io_buf);
-            return NULL;
-        }
-        memcpy(dir_e,d_e+entry_off,sizeof(struct dir_entry));
-        parent_dir->read_entry_cnt ++;
+    dir_e = sys_malloc(sizeof(struct dir_entry));  
+    if(dir_e==NULL){
         sys_free(addr_buf);sys_free(io_buf);
-        return dir_e;
+        return NULL;
     }
-    
+    for(;index<140;index++){
+        if(addr_buf[index]==0) continue;
+        readDisk(io_buf,part->my_disk,addr_buf[index],1);
+        struct dir_entry* d_e = (struct dir_entry*)io_buf;
+        int j = 0;
+        for(;j<entry_cnt_per_sector;j++){
+            if(d_e[j].f_type!=FT_UNKNOW){
+                if(read_cnt==(int32_t)parent_dir->read_entry_cnt){ 
+                    memcpy(dir_e,d_e+j,sizeof(struct dir_entry));
+                    parent_dir->read_entry_cnt ++;
+                    sys_free(addr_buf);sys_free(io_buf);
+                    return dir_e;
+                }
+                read_cnt++;
+            }
+        }
+    }
+    //读取到尽头
     sys_free(addr_buf);sys_free(io_buf);
     return NULL;
 }

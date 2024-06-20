@@ -157,13 +157,14 @@ bool remove_inode(uint32_t inode_no,struct partition*part)
     //清除inode位图
     setBitmap(&part->inode_bitmap,inode_no,0);
     //同步inode
-    if(sync_inode(inode,part)==false){
-        roll_no = 3;
-        goto rollback;
-    }
+    //if(sync_inode(inode,part)==false){
+    //    roll_no = 3;
+    //    goto rollback;
+    //}
     //同步位图
     writeDisk(part->block_bitmap.pbitmap,part->my_disk,part->sb->block_bitmap_lba,part->sb->block_bitmap_sector_cnt);
     sync_bitmap(INODE_BITMAP,part,inode_no);
+    sys_free(addr_buf);
     close_inode(inode);
     return true;
 
