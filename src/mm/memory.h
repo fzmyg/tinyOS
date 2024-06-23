@@ -59,11 +59,15 @@ extern void* mallocUserPage(uint32_t pg_cnt);
 
 extern void freeKernelPage(void*vaddr);
 
-extern void freePcb(void*vaddr);
+extern void pfree(uint32_t pg_phy_addr);
+
+extern void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt);
 
 extern void* addr_v2p(void* vaddr);
 
 extern void* mallocOnePageByVaddr(enum pool_flags pf,void* vaddr);
+
+extern void* malloc1PageByVaddrWithoutVaddrPool(enum pool_flags pf,void* vaddr);
 
 extern void initMemBlockDesc(struct mem_block_desc * k_mem_block_descs);
 
@@ -71,5 +75,4 @@ extern void*sys_malloc(uint32_t cnt);
 
 extern void sys_free(void* ptr);
 
-extern void* malloc1PageByVaddrWithoutVaddrPool(enum pool_flags pf,void* vaddr);
 #endif

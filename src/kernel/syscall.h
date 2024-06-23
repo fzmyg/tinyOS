@@ -47,4 +47,10 @@ extern int stat(const char*file_path,struct file_stat*stat);
 extern pid_t fork(void);
 /*打印全部进程信息*/
 extern int ps(void);
+/*覆盖当前进程执行指定程序*/
+extern int execv(const char* file_path,char*argv[]);
+/**/
+extern pid_t wait(int*status);
+
+extern int exit(int status);
 #endif

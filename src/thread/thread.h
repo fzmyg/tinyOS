@@ -70,6 +70,7 @@ struct task_struct{
 	struct mem_block_desc descs[MEM_DESC_CNT]; //用户内存管理
 	int32_t fd_table[MAX_FILES_OPEN_PER_PROCESS]; //文件描述符数组
 	uint32_t cwd_inode_no;          //工作目录inode号
+	uint32_t exit_status;           //进程退出状态
 	uint32_t stack_magic;			//魔术 --- 防止内核栈溢出 
 };
 

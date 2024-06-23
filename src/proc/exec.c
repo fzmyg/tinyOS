@@ -17,7 +17,7 @@ static int32_t loadSegment(struct Elf32_Phdr * prog_header,int fd)
     }
     uint32_t vaddr = first_page_vaddr;
     uint32_t i = 0;
-    for(;i<occupy_page_cnt;i++){
+    for(;i<occupy_page_cnt;i++){ //设置程序所用到的页表
         uint32_t* pte_vaddr = getPtePtr(vaddr);
         uint32_t* pde_vaddr = getPdePtr(vaddr);
         if((((*pde_vaddr)&PG_P_1)== 0) || (((*pte_vaddr)&PG_P_1)==0)){
@@ -27,7 +27,7 @@ static int32_t loadSegment(struct Elf32_Phdr * prog_header,int fd)
         vaddr += PG_SIZE;
     }
     sys_lseek(fd,prog_header->p_offset,SEEK_SET);
-    sys_read(fd,(void*)prog_header->p_vaddr,prog_header->p_filesz);
+    sys_read(fd,(void*)prog_header->p_vaddr,prog_header->p_filesz);//读取程序段内容到内存
     return 0;
 }
 
@@ -70,6 +70,7 @@ static int32_t loadExecFile(const char*path)
         }
         prog_idx ++;
     }
+    sys_close(fd);
     return elf_header.e_entry;
 }
 

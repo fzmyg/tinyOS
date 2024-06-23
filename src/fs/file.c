@@ -382,9 +382,13 @@ int32_t readFile(struct file*file,char*buf,uint32_t count)
         readDisk(addr_buf+12,cur_part->my_disk,file->fd_inode->i_sectors[12],1);
     /*剩余读取*/
     while(cnt>0){
-        blocks_index = file->fd_pos / SECTOR_SIZE;
+        blocks_index = file->fd_pos/SECTOR_SIZE;
         blocks_off = file->fd_pos % SECTOR_SIZE;
-        read_size = cnt % (SECTOR_SIZE - blocks_off + 1);
+        if(cnt>SECTOR_SIZE-(int32_t)blocks_off){
+            read_size = SECTOR_SIZE-blocks_off;
+        }else{
+            read_size = cnt;
+        }
         if(addr_buf[blocks_index]==0) break;
         readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
         memcpy(buf+count-cnt,io_buf+blocks_off,read_size);

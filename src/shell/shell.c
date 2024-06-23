@@ -151,7 +151,23 @@ void shell(void)
         if(execbuildin(argv_cnt,cmd_argv)==0){ //shell内置命令
             continue;
         }else{
-            printf("command not find\n");
+            struct file_stat file_stat;
+            if(stat(cmd_argv[0],&file_stat)==-1){
+                if(cmd_argv[0]=='.'&&cmd_argv[1]=='/')
+                    printf("file is not exist\n");
+                else    
+                    printf("command not find\n");
+                continue;
+            }
+            if(file_stat.st_ft == FT_REGULAR){
+                pid_t pid = fork();
+                if(pid==0){
+                    execv(cmd_argv[0],cmd_argv);
+                }else{
+                    int status=0;
+                    pid_t child_pid = wait(&status);
+                }
+            }
         }
     }
 }

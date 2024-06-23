@@ -225,18 +225,6 @@ void freeKernelPage(void*vaddr)
 	(*ppte) = 0;
 }
 
-extern void switch_to_and_free_end(void);
-void freePcb(void*vaddr)
-{
-	uint32_t*ppte = getPtePtr((uint32_t)vaddr);
-	int bit_index = (((uint32_t)vaddr&0xfffff000)  - kernel_vmpool.vm_start)/0x1000;
-	setBitmap(&(kernel_vmpool.bitmap),bit_index,0);
-	uint32_t paddr = (*ppte)&0xfffff000;
-	bit_index = (paddr - kernel_pool.m_start)/0x1000;
-	setBitmap(&(kernel_vmpool.bitmap),bit_index,0);
-	(*ppte) = 0;
-	asm volatile("jmp switch_to_and_free_end");
-}
 
 /* 将虚拟地址转换为物理地址 */
 void* addr_v2p(void* vaddr)
@@ -353,7 +341,7 @@ void * sys_malloc(uint32_t size)
 }
 
 /*将物理内存池相应位置0*/
-static void pfree(uint32_t pg_phy_addr)
+void pfree(uint32_t pg_phy_addr)
 {
 	struct pool* mem_pool = (pg_phy_addr>=user_pool.m_start)?&user_pool:&kernel_pool;/*靠pg_phy_addr判断操作内存池对象是用户物理内存池还是内核物理内存池*/
 	uint32_t bit_index = (pg_phy_addr-mem_pool->m_start)/PG_SIZE;
@@ -383,7 +371,7 @@ static void vfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 }
 
 /*内存释放总函数 1.物理位图置0，2.删除页映射，3.虚拟位图置0*/
-static void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
+void mfree(enum pool_flags pf,void*_vaddr,uint32_t pg_cnt)
 {
 	uint32_t vaddr = (uint32_t)_vaddr,i=0;
 

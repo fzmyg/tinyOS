@@ -64,7 +64,7 @@ static void idle(void* arg UNUSED)
 {
 	while(1){
 		thread_block(TASK_BLOCKED);
-		asm volatile ("sti; hlt;":::"memory");
+		asm volatile("sti; hlt;" ::: "memory");
 	}
 }
 
@@ -74,14 +74,14 @@ static void execFunc(thread_func func,void*args)
 	enableInt();
 	func(args);
 }
-
+/*
 static void threadRecoverer(void)
 {
 	closeInt();
 	struct task_struct* cur_pcb = getpcb();
 	cur_pcb->status = TASK_DIED;
 	schedule();
-}
+}*/
 
 /*init task_srtuct base data*/
 static void initThreadBase(struct task_struct* thread,const char*name,int prio)
@@ -115,7 +115,7 @@ static void initThreadStack(struct task_struct*thread,thread_func func,void*args
 	thread->self_kernel_stack -= (sizeof(struct thread_stack));
 	struct thread_stack* thread_stack = (struct thread_stack*)(thread->self_kernel_stack);
 	thread_stack->eip = &execFunc;
-	thread_stack->retaddr = &threadRecoverer;
+	thread_stack->retaddr = NULL;
 	thread_stack->function = func;
 	thread_stack->func_args = args;
 	thread_stack->ebp=thread_stack->ebx=thread_stack->edi=thread_stack->esi=0;
@@ -175,12 +175,8 @@ void schedule(void)
 		list_append(&thread_ready_list,&cur_pcb->ready_node);
 		cur_pcb -> ticks = cur_pcb->priority;
 		cur_pcb -> status = TASK_READY;
-	}else if (cur_pcb -> status == TASK_DIED){
-		list_remove(&cur_pcb->all_node);
-	}else{
-
-
 	}
+
 	if(list_empty(&thread_ready_list)){ /*若没有可执行的线程则唤醒idle线程*/
 		thread_unblock(idle_thread);
 	}
@@ -189,10 +185,10 @@ void schedule(void)
 	activateProcess(next_pcb);
 	//put_str("switch thread : form");put_str(cur_pcb->name);put_char(' ');put_int(cur_pcb->pid);put_char(' ');put_str("to");put_str(next_pcb->name);put_int(next_pcb->pid);put_char('\n');
 	next_pcb -> status = TASK_RUNNING;
-	if (cur_pcb -> status == TASK_DIED) 
+	/*if (cur_pcb -> status == TASK_DIED) 
 		switch_to_and_free(cur_pcb,next_pcb);
-	else 
-		switch_to(cur_pcb,next_pcb);                     // save old esp and switch to new esp
+	else*/ 
+	switch_to(cur_pcb,next_pcb);                     // save old esp and switch to new esp
 	setIntStatus(stat);
 }
 

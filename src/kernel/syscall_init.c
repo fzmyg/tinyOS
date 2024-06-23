@@ -7,6 +7,8 @@
 #include"memory.h"
 #include"fs.h"
 #include"fork.h"
+#include"exec.h"
+#include"wait_exit.h"
 void* syscall_table[SYSCALL_NR]={0};
 
 static pid_t sys_getpid(void)
@@ -44,5 +46,8 @@ void initSyscall(void)
     syscall_table[CLR_SCREEN] = &sys_clr_screen;
     syscall_table[FORK]=&sys_fork;
     syscall_table[PS]=&sys_ps;
+    syscall_table[EXECV]=&sys_execv;
+    syscall_table[WAIT]=&sys_wait;
+    syscall_table[EXIT]=&sys_exit;
     put_str("init syscall done\n");
 }

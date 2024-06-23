@@ -121,3 +121,18 @@ int ps(void)
 {
     return _SYSCALL0(PS);
 }
+
+int execv(const char*file_path,char*argv[])
+{
+    return _SYSCALL2(EXECV,file_path,argv);
+}
+
+pid_t wait(int*status)
+{
+    return _SYSCALL1(WAIT,status);
+}
+
+int  exit(int status)
+{
+    return _SYSCALL1(EXIT,status);
+}

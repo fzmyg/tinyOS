@@ -23,6 +23,9 @@ enum SYSCALL_OFFSET{
     CLR_SCREEN,
     FORK,
     PS,
+    EXECV,
+    WAIT,
+    EXIT
 };
 extern void initSyscall(void);
 
