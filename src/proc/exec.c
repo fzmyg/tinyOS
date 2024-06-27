@@ -84,6 +84,8 @@ int32_t sys_execv(const char* file_path,char*argv[])
         return -1;
     }
     struct task_struct* pcb = getpcb();
+    memcpy(pcb->name,strrchr(file_path,'/'),TASK_NAME_LEN-1);
+    pcb->name[TASK_NAME_LEN-1] = 0;
     struct intr_stack* intr_stack = (struct intr_stack*)(((uint32_t)pcb & 0xfffff000) + PG_SIZE - sizeof(struct intr_stack));
     intr_stack -> ebx = (uint32_t)argv;
     intr_stack -> ecx = argc;

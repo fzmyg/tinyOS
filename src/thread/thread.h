@@ -5,7 +5,7 @@
 #include"list.h"
 #include"memory.h"
 #define MAX_FILES_OPEN_PER_PROCESS 8
-
+#define TASK_NAME_LEN 16
 typedef void(*thread_func)(void*);
 typedef int32_t pid_t;
 
@@ -59,7 +59,7 @@ struct task_struct{
 	pid_t pid;						//进程ID
 	pid_t parent_pid;				//父进程ID
 	enum task_status status;		//线程/进程ID
-	char name[16];					//线程/进程名
+	char name[TASK_NAME_LEN];		//线程/进程名
 	uint8_t priority;				//线程/进程 权重值(总时间片)
 	uint8_t ticks;					//线程/进程 剩余时间片
 	uint32_t elapsed_ticks;			//进程总共消耗的时间片
