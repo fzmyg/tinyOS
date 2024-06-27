@@ -21,7 +21,7 @@ bool bitIsUsed(Bitmap*bitmap,uint32_t bit_idx)
 	ASSERT(bitmap!=NULL);
 	uint32_t byte_index = bit_idx / 8;
 	int32_t  bit_index  = bit_idx % 8;
-	return  (((bitmap->pbitmap)[byte_index]) & (BIT_MASK << bit_index));
+	return  (((bitmap->pbitmap)[byte_index]) & (BIT_MASK << bit_index))!=0?true:false;
 }
 
 /*

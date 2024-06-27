@@ -423,7 +423,7 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
 
     int inode_no = searchFile(abs_path_name,&searched_record);
     bool found_tag = inode_no==-1?false:true;
-    if(searched_record.f_type==FT_DIRECTORY){
+    if(found_tag && searched_record.f_type==FT_DIRECTORY){
         printk("can not open a direcotry with open(),please use opendir()\n");
         sys_free(abs_path_name);
         close_dir(searched_record.parent_dir);
@@ -439,7 +439,7 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
     }
 
     if(found_tag == false && (o_mode & O_CREATE)==0){ //未找到也不创建
-        printk("in path %s,file %s is not exist\n",searched_record.searched_path,strrchr(path_name,'/')+1);
+        printk("in path %s,file %s is not exist\n",searched_record.searched_path,strrchr(abs_path_name,'/')+1);
         close_dir(searched_record.parent_dir);
         sys_free(abs_path_name);
         return -1;
@@ -451,7 +451,7 @@ int32_t sys_open(const char* path_name,uint32_t o_mode)
     }
     switch (o_mode & O_CREATE){
         case O_CREATE:
-            fd = createFile(searched_record.parent_dir,strrchr(path_name,'/')+1,o_mode);
+            fd = createFile(searched_record.parent_dir,strrchr(abs_path_name,'/')+1,o_mode);
             break;
             //以下为打开已存在文件
         default:

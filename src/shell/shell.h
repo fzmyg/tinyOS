@@ -3,7 +3,7 @@
 
 #define MAX_PARAMENTS_NO 16
 #define MAX_PARAMENTS_LEN 16
-
+#define MAX_PATH_LEN 512
 extern char cwd_buf[MAX_PATH_LEN];
 
 extern void shell(void);

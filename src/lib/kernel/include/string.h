@@ -4,6 +4,7 @@
 #define NULL 0
 extern void memset(void*dest,uint8_t val,uint32_t size);
 extern void* memcpy(void*dst,const void*src,uint32_t size);
+extern void* memmove(void*dst,const void*src,uint32_t size);
 extern int8_t memcmp(const void* a,const void*b,uint32_t size);
 
 extern char* strcpy(char*dst,const char*src);

@@ -10,7 +10,6 @@
 #include"ide.h"
 #include"file.h"
 #include"fs.h"
-/* 只在内存中存在 */
 struct dir{
     struct inode* inode;  //指向打开的inode
     uint32_t read_entry_cnt;     //暂时未使用

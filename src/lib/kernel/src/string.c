@@ -2,21 +2,6 @@
 #include"debug.h"
 #include"print.h"
 #include"stdint.h"
-/*
-extern void memset(void*dest,uint8_t val,uint32_t size);
-extern void* memcpy(void*dst,const void*src,uint32_t size);
-extern int8_t memcmp(const void* a,const void*b,uint32_t size);
-
-extern char* strcpy(char*dst,const char*src);
-extern char* strncpy(char*dst,const char*src,uint32_t size);
-extern uint32_t strlen(const char*s);
-extern int8_t strcmp(const char*a,const char*b);
-extern int8_t strncmp(const char*a,const char*b,uint32_t size);
-extern char* strchr(const char*str,const uint8_t ch);
-extern uint32_t strchrs(const char*str,const uint8_t ch);
-extern char* strcat(char*dst_,const char*src_);
-extern char* strncat(char*dst_,const char*src_,uint32_t size);
-*/
 
 void memset(void*dst,uint8_t val,uint32_t size)
 {
@@ -35,6 +20,18 @@ void* memcpy(void*dst_,const void*src_,uint32_t size)
 		*dst++=*src++;
 	}
 	return dst_;
+}
+
+
+void* memmove(void*dst,const void*src,uint32_t size)
+{
+	char* _src = (char*)src+size - 1;
+	char* _dst = (char*)dst+size - 1;
+	while(size-->0){
+		*_dst = *_src;
+		_dst--;_src--;
+	}
+	return dst;
 }
 
 int8_t memcmp(const void*a_,const void*b_,uint32_t size)

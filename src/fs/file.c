@@ -9,6 +9,7 @@
 #include"dir.h"
 #include"interrupt.h"
 #include"debug.h"
+#include"math.h"
 #define DIV_ROUND_UP(a,b) ((((a)-1)/(b)) + 1)
 
 /*文件描述表*/
@@ -251,8 +252,11 @@ int32_t allocDataBlock(struct partition*part,struct inode*inode)
 }
 
 
+//
+/*写入数据有两种模式: 1.覆盖写入 2.追加写入 其中覆盖写入保存文件原始数据块但文件大小需重新分配 追加写入按文件大小为偏移，不使用fd_pos*/
 int32_t writeFile(struct file*file,const char*buf,uint32_t count)  
 {
+    bool first_write_tag = file->fd_pos==0?true:false;
 
     if(file->fd_inode->i_size+count > 140*SECTOR_SIZE){ 
         printk("exceed max file size\n");
@@ -265,96 +269,60 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
     if(io_buf==NULL){
         return -1;
     }
-    if(file->fd_flag & O_APPEND){ //追加写入
-        blocks_index = file->fd_inode->i_size / SECTOR_SIZE; //文件第几个数据块
-        blocks_off = file->fd_inode->i_size % SECTOR_SIZE;   //写入数据的起始偏移
-        uint32_t write_size = 0;
-        //先写入多余的块
-        if(blocks_off!=0){
-            write_size = (int32_t)(SECTOR_SIZE - blocks_off)<cnt?SECTOR_SIZE-blocks_off:(uint32_t)cnt;
-            
-            if(blocks_index<12){
-                readDisk(io_buf,cur_part->my_disk,file->fd_inode->i_sectors[blocks_index],1);
-                memcpy(io_buf+blocks_off,buf,write_size);
-                writeDisk(io_buf,cur_part->my_disk,file->fd_inode->i_sectors[blocks_index],1);
-            }else{
-                uint32_t data_lba;
-                if(file->fd_inode->i_sectors[12] != 0){
-                    readDisk(io_buf,cur_part->my_disk,file->fd_inode->i_sectors[12],1); //读取间接块
-                    data_lba = *(((uint32_t*)io_buf)+blocks_index-12); //获取末尾数据LBA
-                }
-                readDisk(io_buf,cur_part->my_disk,data_lba,1); //读取数据
-                memcpy(io_buf+blocks_off,buf,write_size);
-                writeDisk(io_buf,cur_part->my_disk,file->fd_inode->i_sectors[blocks_index],1);//写入数据
-            }
-            cnt -= write_size;
-            file->fd_inode->i_size+=write_size;
-        }
+    uint32_t * addr_buf = sys_malloc(sizeof(uint32_t)*140);
+    if(addr_buf==NULL){
+        sys_free(io_buf);
+        return -1;
+    }
+    memcpy(addr_buf,file->fd_inode->i_sectors,sizeof(uint32_t)*12);
+    if(file->fd_inode->i_sectors[12])
+        readDisk(addr_buf+12,cur_part->my_disk,file->fd_inode->i_sectors[12],1);
 
-        while(cnt > 0){
+    
+    if(file->fd_flag & O_APPEND)  //追加写入 将pos指针改为文件大小
+        file->fd_pos = file->fd_inode->i_size;
+    else                          //覆盖写入 将文件大小置为0
+        file->fd_inode->i_size = 0;
+    uint32_t write_size = 0;
+
+    while(cnt>0){
+        blocks_index =  file->fd_pos / SECTOR_SIZE;
+        blocks_off   =  file->fd_pos % SECTOR_SIZE; 
+        write_size = 0;
+        if(addr_buf[blocks_index]!=0){
+            if(blocks_off){
+                write_size = (int32_t)(SECTOR_SIZE - blocks_off)<cnt?SECTOR_SIZE-blocks_off:(uint32_t)cnt;
+                readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+            }else{
+                write_size = cnt>SECTOR_SIZE?SECTOR_SIZE:cnt;
+                readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+            }   
+        }else{
             int32_t data_lba = allocDataBlock(cur_part,file->fd_inode);
             if(data_lba == -1){
                 sys_free(io_buf);
+                sys_free(addr_buf);
                 sync_inode(file->fd_inode,cur_part);
-                return (int32_t)count-cnt;
+                return (int32_t)count - cnt;
             }
-            write_size = cnt % (SECTOR_SIZE + 1);
-            memcpy(io_buf,buf+count-cnt,write_size);
-            writeDisk(io_buf,cur_part->my_disk,data_lba,1);
-            cnt-=write_size;
-            file->fd_inode->i_size+=write_size;
+            addr_buf[blocks_index]=data_lba;
+            write_size = cnt>SECTOR_SIZE?SECTOR_SIZE:cnt;
         }
-    }else{//覆盖写入
-        uint32_t old_file_size = file->fd_inode->i_size;
-        uint32_t * addr_buf = sys_malloc(sizeof(uint32_t)*140);
-        if(addr_buf==NULL){
-            sys_free(io_buf);
-            return -1;
-        }
-        memcpy(addr_buf,file->fd_inode->i_sectors,sizeof(uint32_t)*12);
-        if(file->fd_inode->i_sectors[12])
-            readDisk(addr_buf+12,cur_part->my_disk,file->fd_inode->i_sectors[12],1);
-        while(cnt>0){
-            blocks_index =  file->fd_pos / SECTOR_SIZE;
-            blocks_off   =  file->fd_pos % SECTOR_SIZE; 
-            uint32_t write_size = 0;
-            if(addr_buf[blocks_index]!=0){
-                if(blocks_off){
-                    write_size = SECTOR_SIZE - blocks_off;
-                    readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
-                    memcpy(io_buf+blocks_off,buf+count-cnt,write_size);
-                    file->fd_pos +=write_size;
-                    cnt -= write_size;
-                }else{
-                    write_size = cnt % (SECTOR_SIZE+1);
-                    readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
-                    memcpy(io_buf,buf+count-cnt,write_size);
-                    file->fd_pos += write_size;
-                    cnt -= write_size;
-                }   
-                if(file->fd_pos > old_file_size) file->fd_inode->i_size = file->fd_pos;
-            }else{
-                int32_t data_lba = allocDataBlock(cur_part,file->fd_inode);
-                if(data_lba == -1){
-                    sys_free(io_buf);
-                    sys_free(addr_buf);
-                    sync_inode(file->fd_inode,cur_part);
-                    return (int32_t)count - cnt;
-                }
-                addr_buf[blocks_index]=data_lba;
-                write_size = cnt%(SECTOR_SIZE+1);
-                memcpy(io_buf,buf+count-cnt,write_size);
-                file->fd_pos += write_size;
-                cnt -= write_size;
-                file->fd_inode->i_size += write_size;
-            }
-            writeDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
-        }
-        sys_free(addr_buf);
+        
+        memcpy(io_buf+blocks_off,buf+count-cnt,write_size);
+        file->fd_pos += write_size;
+        cnt -= write_size;
+        writeDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+    }
+    if(file->fd_flag & O_APPEND){
+            file->fd_inode->i_size = file->fd_pos;
+    }else{
+        file->fd_inode->i_size = MAX(file->fd_inode->i_size,file->fd_pos + count);
     }
     /*可能会失效*/
     sync_inode(file->fd_inode,cur_part);
     sys_free(io_buf);
+    sys_free(addr_buf);
     return (int32_t)count;
 }
 

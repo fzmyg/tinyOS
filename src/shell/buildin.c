@@ -1,8 +1,6 @@
 #include"syscall.h"
 #include"shell.h"
 #include"buildin.h"
-#include"dir.h"
-#include"fs.h"
 #include"stdio.h"
 #include"string.h"
 extern char cmd_argv[MAX_PARAMENTS_NO][MAX_PARAMENTS_LEN];

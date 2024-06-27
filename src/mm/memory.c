@@ -1,15 +1,3 @@
-/*
- * 	typedef struct vmpool{
- *         	Bitmap bitmap;
- *              uint32_t vm_start;
- *      }vmpool;
- *
- *      typedef struct pool{
- *              Bitmap bitmap;
- *              uint32_t m_start;
- *              uint32_t m_length;
- *      }pool;
- * */
 #include"memory.h"
 #include"debug.h"
 #include"string.h"

@@ -8,8 +8,6 @@
 #include"tss.h"
 #include"debug.h"
 #include"stdio.h"
-#include"syscall.h"
-#include"shell.h"
 /*
  * 初始化用户虚拟内存池
  * */
@@ -82,17 +80,5 @@ void executeProcess(void* filename,char*process_name)
 	proc_pcb->pgdir_vaddr = (uint32_t)createPDT();
 	proc_pcb->pid = createPid();	
 	setIntStatus(stat);
-}
-
-void init(void)
-{
-	uint32_t ret_pid = fork();
-
-	if(ret_pid==0){
-		shell();
-	}else{
-		while(1);
-	}
-	while(1);
 }
 

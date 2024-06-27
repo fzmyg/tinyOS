@@ -245,12 +245,13 @@ init_kernel:
 	xor ecx,ecx	;programer header num
 	xor edx,edx	;each programer  header size
 	
+	;解析ELF头
 	mov dx,[KERNEL_ELF_BASE_ADDR+42]		;each programer header size
 	mov cx,[KERNEL_ELF_BASE_ADDR+44]		;count of programer header
-	mov ebx,[KERNEL_ELF_BASE_ADDR+28]		;first programer offset
+	mov ebx,[KERNEL_ELF_BASE_ADDR+28]		;first programer offset 
 	add ebx,KERNEL_ELF_BASE_ADDR		
 	.read_each_p_header:
-		cmp byte [ebx+0],PT_NULL
+		cmp dword [ebx+0],PT_NULL
 		je .PTNULL
 		push dword [ebx+16]		;size
 		mov eax,[ebx+4]

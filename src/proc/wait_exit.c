@@ -81,6 +81,7 @@ pid_t sys_wait(int32_t * status)
                     mfree(PF_KERNEL,child_pcb->vaddr_pool.bitmap.pbitmap,DIV_ROUND_UP(child_pcb->vaddr_pool.bitmap.bitmap_byte_len,PG_SIZE));//回收子进程位图
                     *status = child_pcb->exit_status;
                     child_pid = child_pcb -> pid;
+                    removePid(child_pid);
                     list_remove(&child_pcb->all_node); //在thread_all_list 中删除子进程
                     freeKernelPage(child_pcb); //回收子进程PCB //子进程资源被完全释放
                     return child_pid;
