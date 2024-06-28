@@ -202,6 +202,6 @@ usrp:./src/usrp/crt.s
 	${AS} ./src/usrp/crt.s  -o ./src/usrp/build/crt.o ${ASFLAGES}
 	${CC} ./src/usrp/vim.c -o ./src/usrp/build/vim.o ${USER_INCLUDE_DIR} ${CFLAGES}
 	${LD} -e _start  -Ttext 0x8048080 -o ./src/usrp/build/vim ./src/usrp/build/crt.o ./src/usrp/build/vim.o ./src/build/string.o ./src/build/stdio.o ./src/build/syscall.o ./src/build/assert.o ./src/build/array.o
-	dd if=./src/usrp/build/vim of=./hd60M.img bs=512 count=10 seek=400 conv=notrunc
+	dd if=./src/usrp/build/vim of=./hd60M.img bs=512 count=58 seek=400 conv=notrunc
 
 

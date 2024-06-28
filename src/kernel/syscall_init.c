@@ -22,6 +22,14 @@ static void sys_clr_screen(void)
     cls();
 }
 
+extern void set_cursor(int pos);
+static void sys_setcursor(int pos)
+{
+    if(pos>=0&&pos<2000){
+        set_cursor(pos);
+    }
+}
+
 void initSyscall(void)
 {
     put_str("init syscall start\n");
@@ -44,6 +52,7 @@ void initSyscall(void)
     syscall_table[CHDIR]=&sys_chdir;
     syscall_table[STAT] = &sys_stat;
     syscall_table[CLR_SCREEN] = &sys_clr_screen;
+    syscall_table[SET_CURSOR] = &sys_setcursor;
     syscall_table[FORK]=&sys_fork;
     syscall_table[PS]=&sys_ps;
     syscall_table[EXECV]=&sys_execv;

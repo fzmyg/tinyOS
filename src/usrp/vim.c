@@ -2,7 +2,7 @@
 #include"syscall.h"
 #include"array.h"
 #include"string.h"
-
+#include"stdint.h"
 static uint32_t getUpLineIndex(const char*file_content,uint32_t edit_index)
 {
     int32_t i = (int32_t)edit_index - 1;
@@ -93,6 +93,31 @@ static char* getPageBuf(const char*file_content,uint32_t file_content_len,uint32
     *page_len = i - (page_start - file_content);
     return (char*)page_start;
 }
+static uint32_t getCursorPos(const char*file_content,uint32_t file_content_len,uint32_t index)
+{
+    //if(file_content_len==1&&index==1)
+      //  return 1;
+    bool first_enter_tag = true;
+    uint32_t line_no=0,line_off=0;
+    int32_t i = (int32_t)index - 1;
+    while(i>=0){
+        if(file_content[i]=='\r'||file_content[i]=='\n'){
+            if(first_enter_tag){
+                first_enter_tag = false;
+            }
+            line_no ++;
+        }else{
+            if(first_enter_tag){
+                if(file_content[i]=='\t')
+                    line_off+=4;
+                else    
+                    line_off++;
+            }
+        }
+        i--;
+    }
+    return line_no*80+line_off;
+}
 
 int main(int argc,char**argv)
 {
@@ -102,29 +127,50 @@ int main(int argc,char**argv)
         return 0;
     }
     struct file_stat file_stat;
-    if(stat(argv[1],&file_stat)==-1){
-        fd = open(argv[1],O_CREATE|O_RDWR);
-    } 
-    if(file_stat.st_ft == FT_DIRECTORY){
-        printf("can not edit a directory\n");
-        return 0;
-    }else{
-        fd = open(argv[1],O_RDWR);
-    }
-    
     struct string file_content_buf;
-    if(initString(&file_content_buf,1024)==-1){
-        printf("system busy , please try again later\n");
-        return 0;
+    bool file_exist_tag = false;
+    if(stat(argv[1],&file_stat)==0){
+        file_exist_tag = true;
     }
-
+    if(file_exist_tag == false){ //文件不存在
+        fd = open(argv[1],O_CREATE|O_RDWR);
+        if(initString(&file_content_buf,1024)==-1){
+            printf("system busy , please try again later\n");
+            close(fd);
+            return 0;
+        }
+    }else{
+        if(file_stat.st_ft == FT_DIRECTORY){ //文件为目录
+            printf("can not edit a directory\n");
+            return 0;
+        }else{ //文件存在
+            fd = open(argv[1],O_RDWR);
+            file_exist_tag = true;
+            if(initString(&file_content_buf,file_stat.st_size)==-1){
+                printf("system busy , please try again later\n");
+                close(fd);
+                return 0;
+            }
+        }
+    }
     uint32_t edit_index = 0,edit_line = 0;
     uint32_t page_start_line = 0, page_end_line = 24;
     uint32_t file_content_len=0;char*file_content=NULL;
+    uint32_t cursor_pos = 0;
+    file_content = getstring(&file_content_buf,&file_content_len); 
+    if(file_exist_tag == true){
+        if(read(fd,file_content,file_stat.st_size) != file_stat.st_size){
+            close(fd);
+            releaseString(&file_content_buf);
+            return -1;
+        }
+    }
+    if(file_content == NULL) exit(-1);
     char ch;bool exit_tag = false;
     char* page_buf = NULL;
     uint32_t page_len;
     page_buf = getPageBuf(file_content,file_content_len,page_start_line,&page_len);
+    clear();
     write(stdout,page_buf,page_len);
     while(exit_tag == false){
         file_content = getstring(&file_content_buf,&file_content_len);
@@ -147,6 +193,7 @@ int main(int argc,char**argv)
                 if(edit_index>0){
                     edit_index --;
                     removechar(&file_content_buf,edit_index);
+                    file_content_len--;
                 }
                 break;
             case (char)0x81:
@@ -164,6 +211,7 @@ int main(int argc,char**argv)
             default:
                 insertchar(&file_content_buf,ch,edit_index);
                 edit_index++;
+                file_content_len++;
                 break;
         }
         edit_line = getEditLine(file_content,edit_index);
@@ -173,7 +221,15 @@ int main(int argc,char**argv)
             page_end_line++;page_start_line++;
         }
         page_buf = getPageBuf(file_content,file_content_len,page_start_line,&page_len);
+        clear();
         write(stdout,page_buf,page_len);
+        cursor_pos = getCursorPos(file_content,file_content_len,edit_index);
+        setcursor((int)cursor_pos);
     }
+    file_content = getstring(&file_content_buf,&file_content_len);
+    write(fd,file_content,file_content_len);
+    clear();
+    close(fd);
+    releaseString(&file_content_buf);
     return 0;
 }

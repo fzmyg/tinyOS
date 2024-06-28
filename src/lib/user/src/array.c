@@ -58,7 +58,7 @@ int insert(struct array*array,void*val,uint32_t index)
 int remove(struct array*array,uint32_t index)
 {
     uint32_t total_len = (array->end-array->start)/array->val_size; //总数据数
-    uint32_t move_len  = total_len - index - 1;                         //需移动数据数
+    uint32_t move_len  = total_len - index ;                         //需移动数据数
 
     memcpy(array->start+array->val_size*index,array->start+array->val_size*(index+1),move_len*array->val_size);
     array->end -= array->val_size;

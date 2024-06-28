@@ -49,6 +49,8 @@ struct dir_entry{
 extern pid_t getpid(void);
 /*清屏*/
 extern void clear(void);
+/*设置光标位置*/
+extern void setcursor(int pos);
 /*项屏幕输出*/
 extern uint32_t print(const char*s);
 /*申请内存*/

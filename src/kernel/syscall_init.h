@@ -21,6 +21,7 @@ enum SYSCALL_OFFSET{
     CHDIR,
     STAT,
     CLR_SCREEN,
+    SET_CURSOR,
     FORK,
     PS,
     EXECV,

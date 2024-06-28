@@ -21,7 +21,7 @@ int main(void)
 	cls(); 
 	put_str("booting kernel\n");
 	init_all();
-	uint32_t file_size = 28 * 1024;
+	uint32_t file_size = 29 * 1024;
 	uint32_t file_sector_cnt = (file_size-1)/512 + 1;
 	char* buf = sys_malloc(file_size);
 	if(buf==NULL){

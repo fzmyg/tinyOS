@@ -101,7 +101,11 @@ int createFile(struct dir* parent_dir,char*file_name,uint32_t flags)
         printk("createFile: alloc_inode_bitmap error\n");
         return -1;
     }
+    struct task_struct * pcb = getpcb();
+    uint32_t pgdir_vaddr = pcb->pgdir_vaddr;
+    pcb->pgdir_vaddr = NULL;
     struct inode* inode = sys_malloc(sizeof(struct inode)); //挂载inode
+    pcb->pgdir_vaddr = pgdir_vaddr;
     if(inode==NULL){
         printk("createFile: sys_malloc for inode faild\n");
         rollval = 1;

@@ -33,6 +33,7 @@ enum SYSCALL_OFFSET{
     CHDIR,
     STAT,
     CLR_SCREEN,
+    SET_CURSOR,
     FORK,
     PS,
     EXECV,
@@ -48,6 +49,11 @@ pid_t getpid(void)
 void clear(void)
 {
     _SYSCALL0(CLR_SCREEN);
+}
+
+void setcursor(int pos)
+{
+    _SYSCALL1(SET_CURSOR,pos);
 }
 
 void* malloc(uint32_t size)
