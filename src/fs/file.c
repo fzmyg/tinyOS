@@ -288,7 +288,7 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
     else                          //覆盖写入 将文件大小置为0
         file->fd_inode->i_size = 0;
     uint32_t write_size = 0;
-
+    uint32_t old_pos = file->fd_pos;
     while(cnt>0){
         blocks_index =  file->fd_pos / SECTOR_SIZE;
         blocks_off   =  file->fd_pos % SECTOR_SIZE; 
@@ -321,7 +321,7 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
     if(file->fd_flag & O_APPEND){
             file->fd_inode->i_size = file->fd_pos;
     }else{
-        file->fd_inode->i_size = MAX(file->fd_inode->i_size,file->fd_pos + count);
+        file->fd_inode->i_size = MAX(file->fd_inode->i_size, old_pos + count);
     }
     /*可能会失效*/
     sync_inode(file->fd_inode,cur_part);

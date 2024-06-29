@@ -3,6 +3,22 @@
 #include"array.h"
 #include"string.h"
 #include"stdint.h"
+
+#define LINE_NO 25
+
+struct page_buf{
+    char* buf;
+    uint32_t start_line,end_line;
+    uint32_t edit_line,edit_index;
+    uint32_t cursor_pos;
+    uint32_t page_len;
+};
+
+struct file_buf{
+    char* file;
+    uint32_t file_len;
+};
+
 static uint32_t getUpLineIndex(const char*file_content,uint32_t edit_index)
 {
     int32_t i = (int32_t)edit_index - 1;
@@ -76,9 +92,7 @@ static char* getPageBuf(const char*file_content,uint32_t file_content_len,uint32
 {
     uint32_t i = 0,enter_cnt = 0;
     *page_len = 0;
-    for(;i<file_content_len;i++){
-        if(enter_cnt == page_start_line)
-            break;
+    for(;i<file_content_len && enter_cnt != page_start_line ;i++){
         if(file_content[i]=='\n'||file_content[i]=='\r')
             enter_cnt ++;
     }    
@@ -93,10 +107,9 @@ static char* getPageBuf(const char*file_content,uint32_t file_content_len,uint32
     *page_len = i - (page_start - file_content);
     return (char*)page_start;
 }
+
 static uint32_t getCursorPos(const char*file_content,uint32_t file_content_len,uint32_t index)
 {
-    //if(file_content_len==1&&index==1)
-      //  return 1;
     bool first_enter_tag = true;
     uint32_t line_no=0,line_off=0;
     int32_t i = (int32_t)index - 1;
@@ -119,16 +132,31 @@ static uint32_t getCursorPos(const char*file_content,uint32_t file_content_len,u
     return line_no*80+line_off;
 }
 
+
+
 int main(int argc,char**argv)
 {
     int fd = -1;
+    struct file_stat file_stat;
+    struct string file_content_buf;
+
+    char ch;
+    bool exit_tag = false;
+    bool file_exist_tag = false;
+
+    uint32_t edit_index = 0,edit_line = 0;
+    uint32_t page_start_line = 0, page_end_line = LINE_NO - 1;
+    uint32_t file_content_len=0;char*file_content=NULL;
+    uint32_t cursor_pos = 0;
+    
+    char* page_buf = NULL;
+    uint32_t page_len;
+ 
+
     if(argc!=2){
         printf("format error:vim + file name\n");
         return 0;
     }
-    struct file_stat file_stat;
-    struct string file_content_buf;
-    bool file_exist_tag = false;
     if(stat(argv[1],&file_stat)==0){
         file_exist_tag = true;
     }
@@ -145,35 +173,40 @@ int main(int argc,char**argv)
             return 0;
         }else{ //文件存在
             fd = open(argv[1],O_RDWR);
-            file_exist_tag = true;
             if(initString(&file_content_buf,file_stat.st_size)==-1){
                 printf("system busy , please try again later\n");
                 close(fd);
                 return 0;
             }
+            file_content = getstring(&file_content_buf,&file_content_len);
+            int32_t read_size = read(fd,file_content,file_stat.st_size) ;
+            pushstr(&file_content_buf,file_content,file_stat.st_size);
+            file_content = getstring(&file_content_buf,&file_content_len);
+            if(read_size != (int32_t)file_stat.st_size){
+                printf("read file content error\n");
+                close(fd);
+                releaseString(&file_content_buf);
+                return -1;
+            }
         }
     }
-    uint32_t edit_index = 0,edit_line = 0;
-    uint32_t page_start_line = 0, page_end_line = 24;
-    uint32_t file_content_len=0;char*file_content=NULL;
-    uint32_t cursor_pos = 0;
-    file_content = getstring(&file_content_buf,&file_content_len); 
-    if(file_exist_tag == true){
-        if(read(fd,file_content,file_stat.st_size) != file_stat.st_size){
-            close(fd);
-            releaseString(&file_content_buf);
-            return -1;
-        }
-    }
-    if(file_content == NULL) exit(-1);
-    char ch;bool exit_tag = false;
-    char* page_buf = NULL;
-    uint32_t page_len;
-    page_buf = getPageBuf(file_content,file_content_len,page_start_line,&page_len);
-    clear();
-    write(stdout,page_buf,page_len);
+     
+
     while(exit_tag == false){
         file_content = getstring(&file_content_buf,&file_content_len);
+        if(file_content == NULL) exit(-1);
+        edit_line = getEditLine(file_content,edit_index);
+        if(edit_line<page_start_line){
+            page_start_line --;page_end_line--;
+        }else if(edit_line>page_end_line){
+            page_end_line++;page_start_line++;
+        }
+        page_buf = getPageBuf(file_content,file_content_len,page_start_line,&page_len);
+        clear();
+        write(stdout,page_buf,page_len);
+        cursor_pos = getCursorPos(page_buf,page_len,edit_index-(page_buf - file_content));
+        setcursor((int)cursor_pos);
+
         if(read(stdin,&ch,1)!=1){
             printf("system busym,please try again later\n");
             break;
@@ -210,23 +243,14 @@ int main(int argc,char**argv)
                 break;
             default:
                 insertchar(&file_content_buf,ch,edit_index);
+                file_content = getstring(&file_content_buf,&file_content_len);
                 edit_index++;
-                file_content_len++;
                 break;
         }
-        edit_line = getEditLine(file_content,edit_index);
-        if(edit_line<page_start_line){
-            page_start_line --;page_end_line--;
-        }else if(edit_line>page_end_line){
-            page_end_line++;page_start_line++;
-        }
-        page_buf = getPageBuf(file_content,file_content_len,page_start_line,&page_len);
-        clear();
-        write(stdout,page_buf,page_len);
-        cursor_pos = getCursorPos(file_content,file_content_len,edit_index);
-        setcursor((int)cursor_pos);
+  
     }
     file_content = getstring(&file_content_buf,&file_content_len);
+    lseek(fd,0,SEEK_SET);
     write(fd,file_content,file_content_len);
     clear();
     close(fd);

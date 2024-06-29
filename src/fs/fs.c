@@ -488,7 +488,14 @@ int32_t sys_write(int32_t fd,const char* buf ,uint32_t count)
 {
     if(fd<0) return -1;
     if(fd == stdout_no || fd == stderr_no){
-        console_put_str(buf);
+        if(strlen(buf)==count)
+            console_put_str(buf);
+        else{
+            uint32_t i = 0;
+            for(;i<count;i++){
+                console_put_char(buf[i]);
+            }
+        }
         return (int32_t)count;
     }
     int32_t write_byte_cnt = -1;

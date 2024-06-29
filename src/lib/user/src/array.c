@@ -6,7 +6,7 @@ int initArray(struct array*arr,uint32_t val_size,uint32_t init_arr_len)
 {
     char*buf = malloc(init_arr_len*val_size);
     if(buf==NULL) return -1;
-    arr->start = arr->end = buf;
+    arr->start = arr->end =  buf;
     arr->edge = arr->start + init_arr_len*val_size;
     arr->val_size = val_size;
     return 0;
@@ -22,10 +22,10 @@ static int appendCapacity(struct array*arr,uint32_t size)
     char*buf = malloc(size);
     if(buf==NULL) return -1;
     memcpy(buf,arr->start,arr->end-arr->start);
+    free(arr->start);
     arr->start = buf;
     arr->end = arr->start + size/2;
     arr->edge = arr->start + size;
-    free(arr->start);
     return 0;
 }
 
