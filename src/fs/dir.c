@@ -38,12 +38,13 @@ void close_dir(struct dir*dir)
     sys_free(dir);
 }
 /*在内存中设置 目录条目*/
-void init_dir_entry(struct dir_entry*p_de,char*filename,uint32_t inode_no,enum file_type ft)
+void init_dir_entry(struct dir_entry*p_de,char*filename,uint32_t inode_no,enum file_type ft,char*part_name)
 {
     memset(p_de,0,sizeof(struct dir_entry));
     uint32_t name_len = strlen(filename);
     ASSERT(name_len<=MAX_FILE_NAME_LEN);
     memcpy(p_de->name,filename,name_len);
+    memcpy(p_de->part_name,part_name,8);
     p_de -> f_type = ft;
     p_de -> i_no =inode_no;
 }
@@ -115,7 +116,7 @@ bool search_dir_entry_by_inode_no(struct partition*part,struct dir*pdir,int inod
 }
 
 //将dir_entry同步到磁盘  创建文件或目录时使用        
-bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry)
+bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry,struct partition* part)
 {
     struct inode* dir_inode = parent_dir->inode;        //inode获取数据块
     void* buf = sys_malloc(SECTOR_SIZE);
@@ -134,59 +135,59 @@ bool sync_dir_entry(struct dir*parent_dir,struct dir_entry* d_entry)
     }
     memcpy(all_blocks_addr,dir_inode->i_sectors,12*sizeof(uint32_t));           //读取前12个数据区地址
     if(dir_inode->i_sectors[12]!=0){ //若间接块存在
-        readDisk(all_blocks_addr+12,cur_part->my_disk,dir_inode->i_sectors[12],1);  //从磁盘读取后128数据区地址 ，读取后all_blocks_addr[12]必不为0
+        readDisk(all_blocks_addr+12,part->my_disk,dir_inode->i_sectors[12],1);  //从磁盘读取后128数据区地址 ，读取后all_blocks_addr[12]必不为0
     }
     for(block_addr_index=0;block_addr_index<140;block_addr_index++){ //遍历数据区地址表
         if(all_blocks_addr[block_addr_index]==0){      //有未分配的块，需修改父目录inode 
-            block_lba = alloc_block_bitmap(cur_part); //分配块
+            block_lba = alloc_block_bitmap(part); //分配块
             if(block_lba==-1){
                 printk("alloc block bitmap for sync_dir_entry faild!\n");
                 sys_free(buf);
                 sys_free(all_blocks_addr);
                 return false;
             }
-            sync_bitmap(BLOCK_BITMAP,cur_part,block_lba-cur_part->sb->data_start_lba);    //磁盘同步块位图
+            sync_bitmap(BLOCK_BITMAP,part,block_lba-part->sb->data_start_lba);    //磁盘同步块位图
             if(block_addr_index<12){ //直接块未分配
                 dir_inode->i_sectors[block_addr_index]=all_blocks_addr[block_addr_index]=block_lba;   //直接分配数据块地址
             }else if(block_addr_index==12){//第一个间接块未分配
                 dir_inode->i_sectors[block_addr_index]=block_lba;      //分配间接块地址
-                int32_t data_block_lba = alloc_block_bitmap(cur_part); //申请一级间接块
+                int32_t data_block_lba = alloc_block_bitmap(part); //申请一级间接块
                 if(data_block_lba==-1){
                     printk("alloc block bitmap for sync_dir_entry faild\n");
-                    setBitmap(&cur_part->block_bitmap,block_lba-cur_part->sb->data_start_lba,0); //还原block_bitmap
-                    sync_bitmap(BLOCK_BITMAP,cur_part,block_lba-cur_part->sb->data_start_lba);   //同步磁盘
+                    setBitmap(&part->block_bitmap,block_lba-part->sb->data_start_lba,0); //还原block_bitmap
+                    sync_bitmap(BLOCK_BITMAP,part,block_lba-part->sb->data_start_lba);   //同步磁盘
                     dir_inode->i_sectors[12]=0;
                     sys_free(buf);
                     sys_free(all_blocks_addr);
                     return false;
                 }
-                sync_bitmap(BLOCK_BITMAP,cur_part,data_block_lba-cur_part->sb->data_start_lba);           //磁盘同步块位图
+                sync_bitmap(BLOCK_BITMAP,part,data_block_lba-part->sb->data_start_lba);           //磁盘同步块位图
                 all_blocks_addr[block_addr_index]=data_block_lba;
-                writeDisk(all_blocks_addr+12,cur_part->my_disk,dir_inode->i_sectors[12],1);//同步间接地址块
+                writeDisk(all_blocks_addr+12,part->my_disk,dir_inode->i_sectors[12],1);//同步间接地址块
             }else{//第二个间接块未分配
                 all_blocks_addr[block_addr_index]=block_lba;
-                writeDisk(all_blocks_addr+12,cur_part->my_disk,dir_inode->i_sectors[12],1);//同步间接地址块
+                writeDisk(all_blocks_addr+12,part->my_disk,dir_inode->i_sectors[12],1);//同步间接地址块
             }
             memset(buf,0,SECTOR_SIZE);
             memcpy(buf,d_entry,sizeof(struct dir_entry));//将目录项拷贝到buf缓冲区
-            writeDisk(buf,cur_part->my_disk,all_blocks_addr[block_addr_index],1); //向磁盘写入目录项
+            writeDisk(buf,part->my_disk,all_blocks_addr[block_addr_index],1); //向磁盘写入目录项
             dir_inode->i_size += sizeof(struct dir_entry);
-            sync_inode(dir_inode,cur_part); //向磁盘中同步父目录inode信息
+            sync_inode(dir_inode,part); //向磁盘中同步父目录inode信息
             sys_free(buf);
             sys_free(all_blocks_addr);
             return true;
         }
         /* 若第block_index块已存在,将其读进内存,然后在该块中查找空目录项 */
-        readDisk(buf,cur_part->my_disk,all_blocks_addr[block_addr_index],1);
+        readDisk(buf,part->my_disk,all_blocks_addr[block_addr_index],1);
         struct dir_entry* p_de = (struct dir_entry*)buf; //p_de[i]来遍历buf区
         uint32_t i = 0;
         for(;i<dir_entry_cnt_per_sector;i++)
         {
             if(p_de[i].f_type == FT_UNKNOW){
                 p_de[i]=*d_entry;
-                writeDisk(buf,cur_part->my_disk,all_blocks_addr[block_addr_index],1);//向磁盘写入目录项
+                writeDisk(buf,part->my_disk,all_blocks_addr[block_addr_index],1);//向磁盘写入目录项
                 dir_inode->i_size+=sizeof(struct dir_entry);
-                sync_inode(dir_inode,cur_part);
+                sync_inode(dir_inode,part);
                 sys_free(buf);
                 sys_free(all_blocks_addr);
                 return true;
@@ -318,17 +319,17 @@ struct dir_entry* read_dir_entry(struct dir* parent_dir,struct partition*part)
 }
 
 
-bool remove_empty_dir(struct dir*parent_dir,struct dir*dir,struct partition*part)
+bool remove_empty_dir(struct dir*parent_dir,struct dir*dir)
 {
 
     struct dir_entry dir_entry;
-    search_dir_entry_by_inode_no(part,parent_dir,dir->inode->i_no,&dir_entry);
-    if(remove_dir_entry(parent_dir,dir->inode->i_no,part)==false){
+    search_dir_entry_by_inode_no(parent_dir->inode->part,parent_dir,dir->inode->i_no,&dir_entry);
+    if(remove_dir_entry(parent_dir,dir->inode->i_no,parent_dir->inode->part)==false){
         return false;
     }
 
-    if(remove_inode(dir->inode->i_no,part)==false){
-        sync_dir_entry(parent_dir,&dir_entry);
+    if(remove_inode(dir->inode->i_no,dir->inode->part)==false){
+        sync_dir_entry(parent_dir,&dir_entry,parent_dir->inode->part);
         return false;
     }
 

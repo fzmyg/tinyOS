@@ -97,7 +97,6 @@ int32_t buildin_mkdir(uint32_t argc,char* argv[MAX_PARA_NO])
         return -1;
     }
     if(mkdir(argv[1])==-1){
-        printf("mkdir error:have no resource to make dirctory\n");
         return -1;
     }
     return 0;

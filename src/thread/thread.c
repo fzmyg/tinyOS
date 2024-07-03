@@ -11,6 +11,7 @@
 #include"process.h"
 #include"fs.h"
 #include"stdio.h"
+#include"mount.h"
 struct task_struct* main_thread;
 struct list thread_ready_list;
 struct list thread_all_list;
@@ -104,6 +105,7 @@ static void initThreadBase(struct task_struct* thread,const char*name,int prio)
 		thread->fd_table[i]=-1;
 	}
 	thread->cwd_inode_no = 0;
+	thread->cur_part = getPart("/");
 	thread->stack_magic = 0x20040104;
 }
 /*init task_struct stack data*/

@@ -15,6 +15,7 @@ struct inode{
     enum file_type file_type;	    //文件类型
     uint32_t hard_link_cnt; 	    //硬链接数
     enum privilege mode;	    	//权限
+    struct partition*part;          //
 
     bool write_deny;                //防止进程同时写入
     struct list_elem i_node;        //查找inode的提速缓冲区
@@ -28,7 +29,7 @@ extern struct inode* open_inode(struct partition* part,uint32_t i_no);
 
 extern void close_inode(struct inode* inode);
 
-extern void init_inode(struct inode*inode,uint32_t i_no,enum file_type file_type);
+extern void init_inode(struct inode*inode,uint32_t i_no,enum file_type file_type,struct partition*part);
 
 //删除inode表 删除数据块位图 删除inode位图
 extern bool remove_inode(uint32_t inode_no,struct partition*part);

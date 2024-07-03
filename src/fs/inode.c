@@ -22,7 +22,7 @@ static struct inode_position locate_inode(struct partition*part,uint32_t inode_n
     struct inode_position inode_pos;
     ASSERT(inode_no<=MAX_INODE_PER_PARTS);
     struct super_block* sb = part->sb;
-    uint32_t inode_size = sizeof(struct inode);
+    uint32_t inode_size = sb -> inode_size;
     uint32_t byte_offset = inode_size * inode_no;
     uint32_t lba_offset = byte_offset / SECTOR_SIZE;
     uint32_t block_offset = byte_offset % SECTOR_SIZE;
@@ -42,6 +42,7 @@ bool sync_inode(const struct inode*inode,struct partition*part)
     pure_inode.i_node.prev = NULL;  pure_inode.i_node.next = NULL;
     pure_inode.write_deny=0;
     pure_inode.hard_link_cnt = 0;
+    pure_inode.part = NULL;
     uint32_t sector_cnt = inode_pos.two_sector?2:1;
     char * buf = sys_malloc(sector_cnt*SECTOR_SIZE);
     if(buf==NULL) {
@@ -95,6 +96,7 @@ struct inode* open_inode(struct partition* part,uint32_t i_no)
     list_push(&part->open_inodes,&inode->i_node); //将新打开的inode加入到inode缓冲区队列队首
     setIntStatus(stat);
     inode->i_open_cnts = 1;
+    inode->part = part;
     return inode;
 }
 
@@ -116,11 +118,12 @@ void close_inode(struct inode* inode)
 }
 
 /*初始化inode*/
-void init_inode(struct inode*inode,uint32_t i_no,enum file_type file_type)
+void init_inode(struct inode*inode,uint32_t i_no,enum file_type file_type,struct partition*part)
 {
     memset(inode,0,sizeof(struct inode));
     inode->i_no = i_no;
     inode->file_type =  file_type;
+    inode->part = part;
 }
 
 //删除inode表 删除数据块位图 删除inode位图  删除父目录中相关项 由

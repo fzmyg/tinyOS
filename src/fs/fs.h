@@ -27,6 +27,7 @@ struct searched_path_record{
     char searched_path[MAX_PATH_LEN];
     struct dir* parent_dir;
     enum file_type f_type;
+    struct partition* part;
 };
 /**/
 struct file_stat{
@@ -71,7 +72,5 @@ extern int sys_getcwd(char* path_buf,uint32_t size);
 extern int sys_chdir(const char*path);
 
 extern int sys_stat(const char*file_path,struct file_stat*stat);
-
-extern struct partition* cur_part;
 
 #endif

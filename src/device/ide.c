@@ -356,3 +356,15 @@ void initIDE()
     }
     put_str("ide_init done\n");
 }
+
+struct partition* getPartByName(const char*part_name)
+{
+    uint32_t disk_index = part_name[2] - 'a';
+    uint32_t part_index = string2digit(part_name+3,strlen(part_name)-3);
+    struct partition*part = NULL;
+    if(part_index>4)
+        part = &channels[disk_index/2].disks[disk_index].prim_parts[part_index-1];
+    else    
+        part = &channels[disk_index/2].disks[disk_index].logic_parts[part_index-5];
+    return part;
+}

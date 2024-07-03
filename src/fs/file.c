@@ -93,10 +93,10 @@ void sync_bitmap(enum bitmap_type bp_type,struct partition*part,uint32_t bit_ind
 }
 
 /*创建文件*/  //1.申请inode号 2.在内存中创建inode 3.设置文件表 4.设置页目录项 5.磁盘同步父目录 6.同步新文件inode 7.同步当前inode_bitmap 8.将inode加入打开的inode链表中 9.获取文件描述符并返回
-int createFile(struct dir* parent_dir,char*file_name,uint32_t flags) 
+int createFile(struct dir* parent_dir,char*file_name,uint32_t flags,struct partition*part) 
 {
     uint32_t rollval = -1;
-    int32_t inode_no = alloc_inode_bitmap(cur_part); //申请inode号
+    int32_t inode_no = alloc_inode_bitmap(part); //申请inode号
     if(inode_no==-1){
         printk("createFile: alloc_inode_bitmap error\n");
         return -1;
@@ -111,7 +111,7 @@ int createFile(struct dir* parent_dir,char*file_name,uint32_t flags)
         rollval = 1;
         goto rollerror;
     }
-    init_inode(inode,inode_no,FT_REGULAR); //为内存中inode赋值
+    init_inode(inode,inode_no,FT_REGULAR,part); //为内存中inode赋值
     int ft_index =  alloc_file_table(); //申请file结构体
     if(ft_index==-1){
         printk("exceed max open files\n");
@@ -123,45 +123,45 @@ int createFile(struct dir* parent_dir,char*file_name,uint32_t flags)
     file_table[ft_index].fd_pos=0;
 
     struct dir_entry dir_e;
-    init_dir_entry(&dir_e,file_name,inode_no,FT_REGULAR);
-    if(sync_dir_entry(parent_dir,&dir_e)==false){ //向磁盘同步dir_entry
+    init_dir_entry(&dir_e,file_name,inode_no,FT_REGULAR,part->name);
+    if(sync_dir_entry(parent_dir,&dir_e,part)==false){ //向磁盘同步dir_entry
         printk("createFile: sync_dir_entry error\n");
         rollval = 3;
         goto rollerror;
     }    
 
-    if(sync_inode(inode,cur_part)==false){ //同步inode
+    if(sync_inode(inode,part)==false){ //同步inode
         printk("createFile: sync_inode error\n");
         rollval = 4;
         goto rollerror;
     } 
-    sync_bitmap(INODE_BITMAP,cur_part,inode_no); //同步inode位图
-    list_push(&cur_part->open_inodes,&inode->i_node); //加入打开的inode队列
+    sync_bitmap(INODE_BITMAP,part,inode_no); //同步inode位图
+    list_push(&part->open_inodes,&inode->i_node); //加入打开的inode队列
     inode->i_open_cnts = 1;
     return install_pcb_fd(ft_index); //返回fd
 rollerror:
     switch(rollval){
         case 4:
-            remove_dir_entry(parent_dir,dir_e.i_no,cur_part);
+            remove_dir_entry(parent_dir,dir_e.i_no,part);
         case 3:
             memset(file_table+ft_index,0,sizeof(struct file));
         case 2:
             sys_free(inode);
         case 1:
-            setBitmap(&cur_part->inode_bitmap,inode_no,0);
+            setBitmap(&part->inode_bitmap,inode_no,0);
             break;
     }
     return -1;
 }
 
-int32_t open_file(uint32_t i_no,uint32_t o_mode)
+int32_t open_file(uint32_t i_no,uint32_t o_mode,struct partition*part)
 {
     int ft_idx = alloc_file_table();
     if(ft_idx == -1){
         printk("exceed max open file count\n");
         return -1;
     }
-    file_table[ft_idx].fd_inode = open_inode(cur_part,i_no);
+    file_table[ft_idx].fd_inode = open_inode(part,i_no);
     if(file_table[ft_idx].fd_inode==NULL){
         printk("exceed max open inode count\n");
         return -1;
@@ -218,7 +218,7 @@ int32_t allocDataBlock(struct partition*part,struct inode*inode)
             if(i<12){
                 inode->i_sectors[i]=block_lba;
                 if(sync_inode(inode,part)==false){
-                    setBitmap(&cur_part->block_bitmap,block_addr_buf[i]-part->sb->data_start_lba,0);
+                    setBitmap(&part->block_bitmap,block_addr_buf[i]-part->sb->data_start_lba,0);
                     inode->i_sectors[i]=0;
                     sys_free(block_addr_buf);
                     return -1;
@@ -260,7 +260,6 @@ int32_t allocDataBlock(struct partition*part,struct inode*inode)
 /*写入数据有两种模式: 1.覆盖写入 2.追加写入 其中覆盖写入保存文件原始数据块但文件大小需重新分配 追加写入按文件大小为偏移，不使用fd_pos*/
 int32_t writeFile(struct file*file,const char*buf,uint32_t count)  
 {
-    bool first_write_tag = file->fd_pos==0?true:false;
 
     if(file->fd_inode->i_size+count > 140*SECTOR_SIZE){ 
         printk("exceed max file size\n");
@@ -280,7 +279,7 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
     }
     memcpy(addr_buf,file->fd_inode->i_sectors,sizeof(uint32_t)*12);
     if(file->fd_inode->i_sectors[12])
-        readDisk(addr_buf+12,cur_part->my_disk,file->fd_inode->i_sectors[12],1);
+        readDisk(addr_buf+12,file->fd_inode->part->my_disk,file->fd_inode->i_sectors[12],1);
 
     
     if(file->fd_flag & O_APPEND)  //追加写入 将pos指针改为文件大小
@@ -296,17 +295,17 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
         if(addr_buf[blocks_index]!=0){
             if(blocks_off){
                 write_size = (int32_t)(SECTOR_SIZE - blocks_off)<cnt?SECTOR_SIZE-blocks_off:(uint32_t)cnt;
-                readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+                readDisk(io_buf,file->fd_inode->part->my_disk,addr_buf[blocks_index],1);
             }else{
                 write_size = cnt>SECTOR_SIZE?SECTOR_SIZE:cnt;
-                readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+                readDisk(io_buf,file->fd_inode->part->my_disk,addr_buf[blocks_index],1);
             }   
         }else{
-            int32_t data_lba = allocDataBlock(cur_part,file->fd_inode);
+            int32_t data_lba = allocDataBlock(file->fd_inode->part,file->fd_inode);
             if(data_lba == -1){
                 sys_free(io_buf);
                 sys_free(addr_buf);
-                sync_inode(file->fd_inode,cur_part);
+                sync_inode(file->fd_inode,file->fd_inode->part);
                 return (int32_t)count - cnt;
             }
             addr_buf[blocks_index]=data_lba;
@@ -316,7 +315,7 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
         memcpy(io_buf+blocks_off,buf+count-cnt,write_size);
         file->fd_pos += write_size;
         cnt -= write_size;
-        writeDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+        writeDisk(io_buf,file->fd_inode->part->my_disk,addr_buf[blocks_index],1);
     }
     if(file->fd_flag & O_APPEND){
             file->fd_inode->i_size = file->fd_pos;
@@ -324,7 +323,7 @@ int32_t writeFile(struct file*file,const char*buf,uint32_t count)
         file->fd_inode->i_size = MAX(file->fd_inode->i_size, old_pos + count);
     }
     /*可能会失效*/
-    sync_inode(file->fd_inode,cur_part);
+    sync_inode(file->fd_inode,file->fd_inode->part);
     sys_free(io_buf);
     sys_free(addr_buf);
     return (int32_t)count;
@@ -351,7 +350,7 @@ int32_t readFile(struct file*file,char*buf,uint32_t count)
     }
     memcpy(addr_buf,file->fd_inode->i_sectors,12*sizeof(uint32_t));
     if(file->fd_inode->i_sectors[12]!=0)
-        readDisk(addr_buf+12,cur_part->my_disk,file->fd_inode->i_sectors[12],1);
+        readDisk(addr_buf+12,file->fd_inode->part->my_disk,file->fd_inode->i_sectors[12],1);
     /*剩余读取*/
     while(cnt>0){
         blocks_index = file->fd_pos/SECTOR_SIZE;
@@ -362,7 +361,7 @@ int32_t readFile(struct file*file,char*buf,uint32_t count)
             read_size = cnt;
         }
         if(addr_buf[blocks_index]==0) break;
-        readDisk(io_buf,cur_part->my_disk,addr_buf[blocks_index],1);
+        readDisk(io_buf,file->fd_inode->part->my_disk,addr_buf[blocks_index],1);
         memcpy(buf+count-cnt,io_buf+blocks_off,read_size);
         file->fd_pos += read_size;
         cnt -= read_size;

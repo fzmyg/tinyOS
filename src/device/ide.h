@@ -58,4 +58,5 @@ extern void writeDisk(const void*const buf,struct disk*hd,uint32_t lba_addr,uint
 /*初始化磁盘*/
 extern void initIDE(void);
 
+extern struct partition* getPartByName(const char*part_name);
 #endif

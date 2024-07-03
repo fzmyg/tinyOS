@@ -109,7 +109,7 @@ compile_oskernel:
 install_kernel: compile_oskernel os_kernel
 	dd if=./src/bin/os_kernel of=./hd60M.img bs=512 count=400 seek=10 conv=notrunc
 os_kernel:${C_OBJECT} ${S_OBJECT}
-	${LD} src/build/main.o src/build/init.o src/build/interrupt.o src/build/kernel.o src/build/timer.o src/build/fork.o src/build/exec.o src/build/wait_exit.o src/build/memory.o ./src/build/thread.o ./src/build/switch.o ./src/build/sync.o ./src/build/console.o ./src/build/keyboard.o ./src/build/ioqueue.o ./src/build/tss.o  ./src/build/syscall_init.o ./src/build/init_proc.o ./src/build/syscall.o  ./src/build/process.o ./src/build/shell.o ./src/build/buildin.o ./src/build/ide.o  ./src/build/fs.o ./src/build/inode.o ./src/build/file.o ./src/build/dir.o ./src/build/stdio.o ./src/build/stdiok.o ./src/build/print.o ./src/build/debug.o ./src/build/string.o  ./src/build/bitmap.o ./src/build/list.o  -o ./src/bin/os_kernel ${LDFLAGES}
+	${LD} src/build/main.o src/build/init.o src/build/interrupt.o src/build/kernel.o src/build/timer.o src/build/fork.o src/build/exec.o src/build/wait_exit.o src/build/memory.o ./src/build/thread.o ./src/build/switch.o ./src/build/sync.o ./src/build/console.o ./src/build/keyboard.o ./src/build/ioqueue.o ./src/build/tss.o  ./src/build/syscall_init.o ./src/build/init_proc.o ./src/build/syscall.o  ./src/build/process.o ./src/build/shell.o ./src/build/buildin.o ./src/build/ide.o  ./src/build/fs.o ./src/build/inode.o ./src/build/file.o ./src/build/dir.o ./src/build/mount.o ./src/build/stdio.o ./src/build/stdiok.o ./src/build/print.o ./src/build/debug.o ./src/build/string.o  ./src/build/bitmap.o ./src/build/list.o  -o ./src/bin/os_kernel ${LDFLAGES}
 #kernel
 ./src/build/%.o:./src/kernel/%.c
 	@mkdir -p ${dir $@}

@@ -17,4 +17,8 @@ extern char* strchr(const char*str,const uint8_t ch);
 extern char* strrchr(const char*str,const char ch);
 extern char* strcat(char*dst_,const char*src_);
 extern char* strncat(char*dst_,const char*src_,uint32_t size);
+
+extern uint32_t samecnt(const char* a,const char* b);
+
+extern int string2digit(const char* str,uint32_t len);
 #endif

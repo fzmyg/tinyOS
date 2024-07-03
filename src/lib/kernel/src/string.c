@@ -161,3 +161,27 @@ char * strncat(char*dst_,const char*src_,uint32_t size)
 	*p=0;
 	return dst_;
 }
+
+#include"math.h"
+uint32_t samecnt(const char* a,const char* b)
+{
+	uint32_t len = MIN(strlen(a),strlen(b));
+	uint32_t i = 0,same_cnt = 0;
+	for(;i<len;i++){
+		if(a[i]!=b[i])
+			return same_cnt;
+		same_cnt++;
+	}
+	return same_cnt;
+}
+
+int string2digit(const char* str,uint32_t len)
+{
+	int ret = 0;
+	uint32_t i = 0;
+	for(;i<len;i++){
+		ret*=10;
+		ret += str[i]-'0';
+	}
+	return ret;
+}
