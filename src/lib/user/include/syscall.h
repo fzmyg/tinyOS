@@ -97,4 +97,6 @@ extern int execv(const char* file_path,char*argv[]);
 extern pid_t wait(int*status);
 
 extern int exit(int status);
+
+extern int dup(int fd);
 #endif

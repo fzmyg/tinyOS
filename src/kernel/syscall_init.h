@@ -26,7 +26,8 @@ enum SYSCALL_OFFSET{
     PS,
     EXECV,
     WAIT,
-    EXIT
+    EXIT,
+    DUP
 };
 extern void initSyscall(void);
 

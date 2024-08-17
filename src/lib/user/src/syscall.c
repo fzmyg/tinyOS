@@ -38,7 +38,8 @@ enum SYSCALL_OFFSET{
     PS,
     EXECV,
     WAIT,
-    EXIT
+    EXIT,
+    DUP
 };
 
 pid_t getpid(void)
@@ -166,4 +167,9 @@ pid_t wait(int*status)
 int  exit(int status)
 {
     return _SYSCALL1(EXIT,status);
+}
+
+int  dup(int old_fd)
+{
+    return _SYSCALL1(DUP,old_fd);
 }
