@@ -209,7 +209,7 @@ static int getMeanOfPathPara(char* start,char*end)
 }
 
 /*相对路径转换为绝对路径*/
-static char* convertAbsPath(const char*path)
+char* convertAbsPath(const char*path)
 {
     //将相对路径转换为标准路径 去除连续 //
     char* std_path = sys_malloc(MAX_PATH_LEN);
@@ -971,4 +971,21 @@ int sys_stat(const char* file_path,struct file_stat * stat)
     sys_free(abs_path);
     close_dir(record.parent_dir);
     return 0;
+}
+/* 复制文件描述符
+ * 参数1 old_fd : 待复制的文件描述符
+ */
+int sys_dup(const int old_fd)
+{
+    if(old_fd>=MAX_FILES_OPEN_PER_PROCESS)
+        return -1;
+    struct task_struct * pcb = getpcb();
+    int i = 3;
+    for(;i<MAX_FILES_OPEN_PER_PROCESS;i++){
+        if(pcb->fd_table[i]==-1){
+            pcb->fd_table[i] = pcb->fd_table[old_fd];
+            return i;
+        }
+    }
+    return -1;
 }

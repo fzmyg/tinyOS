@@ -40,6 +40,8 @@ struct file_stat{
 extern void initFileSystem(void);
 //转换路径格式为标准格式
 extern uint32_t convertPath(const char*in_path,char*out_path);
+
+extern char* convertAbsPath(const char*path);
 //获取路径深度
 extern uint32_t getPathDepth(const char* path);
 //打开文件
@@ -72,5 +74,7 @@ extern int sys_getcwd(char* path_buf,uint32_t size);
 extern int sys_chdir(const char*path);
 
 extern int sys_stat(const char*file_path,struct file_stat*stat);
+
+extern int sys_dup(const int old_fd);
 
 #endif
